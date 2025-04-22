@@ -1,7 +1,8 @@
 const Page = () => {
     return (
-       <>
-       Page</>
+        <>
+            Page
+        </>
     )
 }
 

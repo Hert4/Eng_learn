@@ -26,15 +26,41 @@ import { FcGoogle } from 'react-icons/fc';
 import { IconButton } from '@chakra-ui/react';
 import authScreenAtom from '../atom/authAtom.js'
 import { useSetRecoilState } from 'recoil'
+import userAtom from '../atom/userAtom.js'
 const MotionFlex = motion(Flex)
 
 const LoginComp = () => {
     const showToast = useShowToast()
     const [showPassword, setShowPassword] = useState(false);
     const setAuthScreen = useSetRecoilState(authScreenAtom)
+    const [inputs, setInputs] = useState({
+        email: '',
+        password: ''
+    })
 
-    const handleLogin = () => {
-        showToast("Sign up", "Account created successfully", "success")
+    const setUser = useSetRecoilState(userAtom)
+
+    const handleLogin = async () => {
+        try {
+            const res = await fetch('api/users/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(inputs)
+            })
+            const data = await res.json()
+            if (data.error) {
+                showToast("Error", data.error, "error")
+                return
+            }
+            localStorage.setItem('user', JSON.stringify(data))
+            setUser(data)
+            console.log(data)
+            showToast("Success", "Login successful", "success")
+        } catch (error) {
+            console.log(error)
+        }
     }
     return (
         <Stack minH={'100vh'} direction={{ base: 'column', md: 'row' }} position="relative">
@@ -113,6 +139,8 @@ const LoginComp = () => {
                                     focusBorderColor="blue.400"
                                     transition="all 0.3s"
                                     placeholder="your@email.com"
+                                    onChange={(e) => setInputs({ ...inputs, email: e.target.value })}
+                                    value={inputs?.email || ""}
                                 />
                             </InputGroup>
                         </FormControl>
@@ -129,7 +157,8 @@ const LoginComp = () => {
                                     focusBorderColor="blue.400"
                                     transition="all 0.3s"
                                     placeholder="••••••••"
-
+                                    onChange={(e) => setInputs({ ...inputs, password: e.target.value })}
+                                    value={inputs?.password || ""}
                                 />
                                 <InputRightElement>
                                     <Icon
@@ -216,6 +245,7 @@ const LoginComp = () => {
                             fontWeight="medium"
                             _hover={{ textDecoration: 'underline' }}
                             onClick={() => { setAuthScreen("signup") }}
+
                         >
                             Sign up
                         </Link>

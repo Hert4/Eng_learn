@@ -26,6 +26,7 @@ import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaApple, FaFacebookF } f
 import { FcGoogle } from 'react-icons/fc'
 import { useSetRecoilState } from 'recoil'
 import authScreenAtom from '../atom/authAtom.js'
+import userAtom from '../atom/userAtom.js'
 
 const MotionFlex = motion(Flex)
 
@@ -33,11 +34,44 @@ const SignupComp = () => {
     const showToast = useShowToast()
     const [showPassword, setShowPassword] = useState(false)
     const setAuthScreen = useSetRecoilState(authScreenAtom)
+    const setUser = useSetRecoilState(userAtom)
 
+    const [inputs, setInputs] = useState({
+        username: "",
+        email: "",
+        password: ""
+    })
 
-    const handleSignup = () => {
-        showToast("Sign up", "Account created successfully", "success")
+    const handleSignup = async () => {
+        try {
+            // console.log("inputs", inputs) // here we have get inputs from the form
+            const res = await fetch(`api/users/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(inputs)
+            })
+
+            const data = await res.json()
+            // console.log(data)
+            if (data.error) {
+                showToast("Sign up", data.error, "error")
+                return
+            }
+
+            showToast("Sign up", "Account created successfully", "success")
+
+            localStorage.setItem("user", JSON.stringify(data))
+            setUser(data)
+        } catch (error) {
+            showToast("Sign up", "Account created failed", "error")
+            console.log(error)
+
+        }
     }
+
+
 
     return (
         <Stack minH={'100vh'} direction={{ base: 'column', md: 'row' }} position="relative">
@@ -86,7 +120,7 @@ const SignupComp = () => {
 
                     <Stack spacing={4}>
                         <FormControl id="name" isRequired>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel>Username</FormLabel>
                             <InputGroup>
                                 <InputLeftElement pointerEvents="none">
                                     <Icon as={FaUser} color="gray.400" />
@@ -95,7 +129,9 @@ const SignupComp = () => {
                                     type="text"
                                     borderRadius="xl"
                                     focusBorderColor="blue.400"
-                                    placeholder="Your name"
+                                    placeholder="Your username"
+                                    onChange={(e) => setInputs({ ...inputs, username: e.target.value })}
+                                    value={inputs.username}
                                 />
                             </InputGroup>
                         </FormControl>
@@ -111,6 +147,8 @@ const SignupComp = () => {
                                     borderRadius="xl"
                                     focusBorderColor="blue.400"
                                     placeholder="your@email.com"
+                                    onChange={(e) => setInputs({ ...inputs, email: e.target.value })}
+                                    value={inputs.email}
                                 />
                             </InputGroup>
                         </FormControl>
@@ -126,6 +164,8 @@ const SignupComp = () => {
                                     borderRadius="xl"
                                     focusBorderColor="blue.400"
                                     placeholder="password"
+                                    onChange={(e) => setInputs({ ...inputs, password: e.target.value })}
+                                    value={inputs.password}
                                 />
                                 <InputRightElement>
                                     <Icon

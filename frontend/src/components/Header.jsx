@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
     Box,
     Flex,
-    Link,
     IconButton,
     Drawer,
     DrawerOverlay,
@@ -10,9 +9,11 @@ import {
     DrawerCloseButton,
     DrawerBody,
     VStack,
+    Link,
     Button,
     useColorMode,
 } from '@chakra-ui/react';
+import { Link as RouterLink } from 'react-router-dom';
 import { HamburgerIcon } from '@chakra-ui/icons';
 import { motion } from 'framer-motion';
 import { FaTwitter, FaYoutube, FaInstagram, FaDiscord } from 'react-icons/fa';
@@ -24,6 +25,7 @@ import { useSetRecoilState } from 'recoil';
 import userAtom from '../atom/userAtom.js';
 import { HiOutlineLogout } from "react-icons/hi";
 import useShowToast from '../hooks/showToast.js';
+import { Menu, MoonIcon, SunIcon, User2Icon, UserCircle } from "lucide-react";
 
 
 const MotionBox = motion(Box);
@@ -60,7 +62,7 @@ const Header = ({ user }) => {
         { label: 'Home', href: '#' },
         { label: 'Exercise', href: '#exercise' },
         { label: 'Test', href: '#test' },
-        { label: 'FQA', href: '#fqa' },
+        { label: 'FAQ', href: '#faq' },
     ];
 
     const handleOpenLinks = () => {
@@ -95,7 +97,7 @@ const Header = ({ user }) => {
         <>
             <MotionBox
                 as="nav"
-                position="fixed"
+                position="abosolute" //fixed is base
                 w="full"
                 bg={scrollY > 50
                     ? (colorMode === 'light' ? 'whiteAlpha.900' : 'gray.800')
@@ -129,7 +131,7 @@ const Header = ({ user }) => {
                         Opic
                     </MotionLink>
 
-                    {/* 🖥️ Desktop nav links */}
+                    {/* Desktop nav links */}
                     <Flex
                         display={{ base: 'none', md: 'flex' }}
                         align="center"
@@ -139,8 +141,10 @@ const Header = ({ user }) => {
                         bg={colorMode === 'light' ? 'gray.100' : 'gray.700'}
                         rounded="full"
                         boxShadow="sm"
-                        overflowX="auto"
-                        className="hide-scrollbar"
+                        marginLeft={4}
+                    // overflowX="auto"
+                    // className="hide-scrollbar"
+
                     >
                         {navItems.map(({ label, href }) => (
                             <MotionLink
@@ -168,32 +172,34 @@ const Header = ({ user }) => {
                         ))}
                     </Flex>
 
-                    {/* 🖥️ Desktop: Theme Toggle + Login/Profile + About us */}
+                    {/* Desktop: Theme Toggle + Login/Profile + About us */}
                     <Flex display={{ base: 'none', md: 'flex' }} align="center" gap={4}>
                         <MotionButton
                             onClick={toggleColorMode}
                             variant="ghost"
-                            fontSize="sm"
+                            fontSize="md"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.95 }}
                         >
-                            {colorMode === 'light' ? '🌙 Dark' : '☀️ Light'}
+                            {/* {colorMode === 'light' ? '🌙' : '☀️'} */}
+                            {colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
                         </MotionButton>
 
                         {/* Login or Profile (Desktop) */}
                         {user ? (
-                            <MotionLink
-                                href="/profile"
+                            <MotionButton
+                                as={RouterLink}
+                                to={`${user.username}`}
                                 px={4}
+                                variant="ghost"
                                 py={2}
-                                fontSize="sm"
-                                fontWeight="medium"
+                                fontSize="md"
                                 color={colorMode === 'light' ? '#3182ce' : 'white'}
-                                _hover={{ color: '#2563eb' }}
                                 whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                Profile
-                            </MotionLink>
+                                <UserCircle />
+                            </MotionButton>
                         ) : (
                             <MotionLink
                                 href="/auth"
@@ -246,7 +252,7 @@ const Header = ({ user }) => {
                         </MotionButton>
                     </Flex>
 
-                    {/* 📱 Mobile: Hamburger menu */}
+                    {/* Mobile: Hamburger menu */}
                     <IconButton
                         display={{ base: 'flex', md: 'none' }}
                         icon={<HamburgerIcon fontSize="2xl" />}
@@ -256,7 +262,7 @@ const Header = ({ user }) => {
                         color={colorMode === 'light' ? '#3182ce' : 'white'}
                     />
 
-                    {/* 📱 Mobile Drawer Menu */}
+                    {/* Mobile Drawer Menu */}
                     <Drawer isOpen={isOpen} placement="right" onClose={closeMenu}>
                         <DrawerOverlay />
                         <DrawerContent>
@@ -316,16 +322,18 @@ const Header = ({ user }) => {
 
                                         {user ? (
                                             <MotionLink
-                                                href="/profile"
+                                                as={RouterLink}
+                                                to={`${user.username}`}
                                                 px={4}
                                                 py={2}
-                                                fontSize="sm"
+                                                fontSize="md"
                                                 fontWeight="medium"
                                                 color={colorMode === 'light' ? '#3182ce' : 'white'}
                                                 _hover={{ color: '#2563eb' }}
                                                 whileHover={{ scale: 1.1 }}
                                             >
-                                                Profile
+                                                <UserCircle />
+
                                             </MotionLink>
                                         ) : (
                                             <MotionLink
@@ -373,7 +381,7 @@ const Header = ({ user }) => {
 
             {/* Popup hiển thị khi bấm About us */}
             <LinksPopup isOpen={isLinksOpen} onClose={closeLinks} />
-
+            {/* <NotificationPopup isOpen={isLinksOpen} onClose={closeLinks} message='Cho tớ tiền đi mà Quân' /> */}
         </>
     );
 };

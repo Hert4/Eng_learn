@@ -30,6 +30,8 @@ const LinksPopup = ({ isOpen, onClose }) => {
         // { name: 'my location', icon: MdStore, url: 'https://example.com/merch' },
     ];
 
+    const year = new Date().getFullYear();
+
     return (
         <Popup isOpen={isOpen} onClose={onClose} title="About us">
             <Grid templateColumns="repeat(4, 1fr)" gap={6}>
@@ -58,7 +60,8 @@ const LinksPopup = ({ isOpen, onClose }) => {
 
             <Box mt={10} p={3} textAlign="center" borderRadius="md" bg="gray.100">
                 <Text fontSize="sm" color="gray.600">
-                    clicking any of the links will open a new tab!
+                    {/* clicking any of the links will open a new tab! */}
+                    &copy; {year} page made by S/W Automation P
                 </Text>
             </Box>
         </Popup>

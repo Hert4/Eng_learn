@@ -12,9 +12,9 @@ import {
     Link,
     Button,
     useColorMode,
+    Text,
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
-import { HamburgerIcon } from '@chakra-ui/icons';
 import { motion } from 'framer-motion';
 import { FaTwitter, FaYoutube, FaInstagram, FaDiscord } from 'react-icons/fa';
 import { SiBuymeacoffee, SiBluesky } from 'react-icons/si';
@@ -25,8 +25,7 @@ import { useSetRecoilState } from 'recoil';
 import userAtom from '../atom/userAtom.js';
 import { HiOutlineLogout } from "react-icons/hi";
 import useShowToast from '../hooks/showToast.js';
-import { Menu, MoonIcon, SunIcon, User2Icon, UserCircle } from "lucide-react";
-
+import { Moon, Sun, UserCircle, Menu } from 'lucide-react';
 
 const MotionBox = motion(Box);
 const MotionLink = motion(Link);
@@ -90,99 +89,149 @@ const Header = ({ user }) => {
         } catch (error) {
             console.log(error.message);
         }
-
     }
+
+    // iOS color palette
+    const iosColors = {
+        light: {
+            primary: '#007AFF',
+            secondary: '#34C759',
+            background: 'rgba(242, 242, 247, 0.8)',
+            text: '#1C1C1E',
+            navbar: 'rgba(249, 249, 249, 0.8)',
+            button: '#007AFF',
+            buttonText: 'white',
+        },
+        dark: {
+            primary: '#0A84FF',
+            secondary: '#30D158',
+            background: 'rgba(28, 28, 30, 0.8)',
+            text: '#FFFFFF',
+            navbar: 'rgba(36, 36, 38, 0.8)',
+            button: '#0A84FF',
+            buttonText: 'white',
+        }
+    };
+
+    const currentColors = iosColors[colorMode];
 
     return (
         <>
             <MotionBox
                 as="nav"
-                position="abosolute" //fixed is base
+                position="fixed"
                 w="full"
                 bg={scrollY > 50
-                    ? (colorMode === 'light' ? 'whiteAlpha.900' : 'gray.800')
-                    : (colorMode === 'light'
-                        ? 'linear-gradient(90deg, rgba(49, 130, 206, 0.1), rgba(255, 255, 255, 0.2))'
-                        : 'linear-gradient(90deg, rgba(49, 130, 206, 0.1), rgba(0, 0, 0, 0.2))')}
-                backdropFilter="blur(12px)"
+                    ? (colorMode === 'light' ? 'rgba(249, 249, 249, 0.8)' : 'rgba(36, 36, 38, 0.8)')
+                    : 'transparent'}
+                backdropFilter="blur(20px)"
                 zIndex="50"
-                shadow={scrollY > 50 ? 'md' : 'none'}
+                borderBottom={scrollY > 50 ? `1px solid ${colorMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` : 'none'}
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
+                transition={{
+                    type: 'spring',
+                    damping: 20,
+                    stiffness: 200
+                }}
             >
-                <Flex maxW="7xl" mx="auto" px={{ base: 4, md: 6 }} py={2} align="center" justify="space-between">
-
-                    {/* Logo */}
+                <Flex
+                    maxW="7xl"
+                    mx="auto"
+                    px={{ base: 4, md: 6 }}
+                    py={3}
+                    align="center"
+                    justify="space-between"
+                >
+                    {/* Logo with iOS-style typography */}
                     <MotionLink
                         as={Link}
                         href="/"
                         fontSize={{ base: 'xl', md: '2xl' }}
-                        fontWeight="bold"
-                        color={colorMode === 'light' ? '#3182ce' : 'white'}
-                        _hover={{ color: '#2563eb' }}
+                        fontWeight="600"
+                        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                        color={currentColors.primary}
+                        _hover={{ color: currentColors.primary, opacity: 0.8 }}
                         display="flex"
                         alignItems="center"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.6, ease: 'easeOut' }}
-                        whileHover={{ scale: 1.05 }}
+                        transition={{
+                            duration: 0.6,
+                            ease: [0.16, 1, 0.3, 1]
+                        }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
                     >
                         Opic
                     </MotionLink>
 
-                    {/* Desktop nav links */}
+                    {/* Desktop nav links - iOS-style segmented control */}
                     <Flex
                         display={{ base: 'none', md: 'flex' }}
                         align="center"
-                        gap={2}
-                        px={3}
+                        gap={1}
+                        px={1}
                         py={1}
-                        bg={colorMode === 'light' ? 'gray.100' : 'gray.700'}
-                        rounded="full"
-                        boxShadow="sm"
-                        marginLeft={4}
-                    // overflowX="auto"
-                    // className="hide-scrollbar"
-
+                        bg={colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)'}
+                        rounded="xl"
+                        boxShadow={colorMode === 'light' ? 'sm' : 'none'}
+                        border={colorMode === 'light' ? '1px solid rgba(0,0,0,0.04)' : '1px solid rgba(255,255,255,0.04)'}
                     >
                         {navItems.map(({ label, href }) => (
-                            <MotionLink
+                            <MotionButton
                                 key={label}
+                                as="a"
                                 href={href}
-                                fontSize="md"
-                                fontWeight="semibold"
+                                fontSize="sm"
+                                fontWeight="500"
+                                fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                                 whiteSpace="nowrap"
-                                px={6}
-                                py={2.5}
-                                rounded="full"
-                                bg={activeSection === label ? '#3182ce' : 'transparent'}
-                                color={activeSection === label ? 'white' : colorMode === 'light' ? 'gray.700' : 'gray.200'}
+                                px={5}
+                                py={2}
+                                rounded="lg"
+                                bg={activeSection === label ? currentColors.primary : 'transparent'}
+                                color={activeSection === label ? 'white' : currentColors.text}
                                 _hover={{
-                                    bg: activeSection === label ? '#2563eb' : colorMode === 'light' ? 'gray.200' : 'gray.600',
-                                    color: activeSection === label ? 'white' : '#3182ce',
+                                    bg: activeSection === label ? currentColors.primary : colorMode === 'light' ? 'rgba(229, 229, 234, 0.8)' : 'rgba(44, 44, 46, 0.8)',
                                 }}
                                 onClick={() => handleLinkClick(label)}
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ scale: 0.95 }}
-                                transition={{ duration: 0.25 }}
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                transition={{
+                                    type: 'spring',
+                                    damping: 15,
+                                    stiffness: 300
+                                }}
                             >
                                 {label}
-                            </MotionLink>
+                            </MotionButton>
                         ))}
                     </Flex>
 
-                    {/* Desktop: Theme Toggle + Login/Profile + About us */}
-                    <Flex display={{ base: 'none', md: 'flex' }} align="center" gap={4}>
+                    {/* Desktop: Right side buttons */}
+                    <Flex display={{ base: 'none', md: 'flex' }} align="center" gap={3}>
+                        {/* Theme toggle - iOS style */}
                         <MotionButton
                             onClick={toggleColorMode}
                             variant="ghost"
-                            fontSize="md"
+                            size="sm"
+                            p={2}
+                            rounded="full"
+                            bg={colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)'}
                             whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileTap={{ scale: 0.9 }}
+                            transition={{
+                                type: 'spring',
+                                damping: 15,
+                                stiffness: 300
+                            }}
                         >
-                            {/* {colorMode === 'light' ? '🌙' : '☀️'} */}
-                            {colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
+                            {colorMode === 'light' ? (
+                                <Moon size={20} color={currentColors.text} />
+                            ) : (
+                                <Sun size={20} color={currentColors.text} />
+                            )}
                         </MotionButton>
 
                         {/* Login or Profile (Desktop) */}
@@ -190,198 +239,312 @@ const Header = ({ user }) => {
                             <MotionButton
                                 as={RouterLink}
                                 to={`${user.username}`}
-                                px={4}
                                 variant="ghost"
-                                py={2}
-                                fontSize="md"
-                                color={colorMode === 'light' ? '#3182ce' : 'white'}
+                                size="sm"
+                                p={2}
+                                rounded="full"
+                                bg={colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)'}
                                 whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
+                                whileTap={{ scale: 0.9 }}
+                                transition={{
+                                    type: 'spring',
+                                    damping: 15,
+                                    stiffness: 300
+                                }}
                             >
-                                <UserCircle />
+                                <UserCircle size={20} color={currentColors.primary} />
                             </MotionButton>
                         ) : (
-                            <MotionLink
-                                href="/auth"
+                            <MotionButton
+                                as={RouterLink}
+                                to="/auth"
+                                size="sm"
                                 px={4}
                                 py={2}
-                                fontSize="sm"
-                                fontWeight="medium"
-                                color={colorMode === 'light' ? '#3182ce' : 'white'}
-                                _hover={{ color: '#2563eb' }}
-                                whileHover={{ scale: 1.1 }}
+                                rounded="lg"
+                                bg="transparent"
+                                color={currentColors.primary}
+                                fontWeight="500"
+                                fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                _hover={{ bg: colorMode === 'light' ? 'rgba(0, 122, 255, 0.1)' : 'rgba(10, 132, 255, 0.1)' }}
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                transition={{
+                                    type: 'spring',
+                                    damping: 15,
+                                    stiffness: 300
+                                }}
                             >
-                                Login
-                            </MotionLink>
+                                Sign In
+                            </MotionButton>
                         )}
 
                         {user && (
                             <MotionButton
                                 onClick={handleLogout}
-                                leftIcon={<HiOutlineLogout />}
-                                bgGradient="linear(to-r, red.400, pink.400)"
-                                color="white"
-                                px={5}
+                                size="sm"
+                                px={4}
                                 py={2}
-                                rounded="full"
-                                fontSize="sm"
-                                fontWeight="medium"
-                                _hover={{ bgGradient: "linear(to-r, red.500, pink.500)", boxShadow: "lg" }}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
+                                rounded="lg"
+                                bg="transparent"
+                                color="#FF453A" // iOS red
+                                fontWeight="500"
+                                fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                _hover={{ bg: colorMode === 'light' ? 'rgba(255, 69, 58, 0.1)' : 'rgba(255, 69, 58, 0.1)' }}
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                transition={{
+                                    type: 'spring',
+                                    damping: 15,
+                                    stiffness: 300
+                                }}
                             >
-                                Logout
+                                Log Out
                             </MotionButton>
                         )}
 
-
-                        {/* About us */}
+                        {/* About us - iOS-style filled button */}
                         <MotionButton
                             onClick={handleOpenLinks}
-                            bg="#3182ce"
-                            color="white"
-                            px={6}
+                            size="sm"
+                            px={4}
                             py={2}
-                            rounded="full"
-                            fontSize="sm"
-                            _hover={{ bg: '#2563eb' }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            rounded="lg"
+                            bg={currentColors.primary}
+                            color="white"
+                            fontWeight="500"
+                            fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                            _hover={{ bg: colorMode === 'light' ? '#0066CC' : '#0A78E6' }}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            transition={{
+                                type: 'spring',
+                                damping: 15,
+                                stiffness: 300
+                            }}
                         >
-                            About us
+                            About
                         </MotionButton>
                     </Flex>
 
                     {/* Mobile: Hamburger menu */}
                     <IconButton
                         display={{ base: 'flex', md: 'none' }}
-                        icon={<HamburgerIcon fontSize="2xl" />}
+                        icon={<Menu size={24} />}
                         aria-label="Open Menu"
                         onClick={toggleMenu}
                         variant="ghost"
-                        color={colorMode === 'light' ? '#3182ce' : 'white'}
+                        color={currentColors.text}
+                        size="sm"
+                        p={2}
+                        rounded="full"
+                        bg={colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)'}
                     />
 
-                    {/* Mobile Drawer Menu */}
-                    <Drawer isOpen={isOpen} placement="right" onClose={closeMenu}>
-                        <DrawerOverlay />
-                        <DrawerContent>
-                            <DrawerCloseButton color="#3182ce" />
-                            <DrawerBody display="flex" flexDir="column" alignItems="center" justifyContent="center" p={6} bg={colorMode === 'light' ? 'white' : 'gray.800'}>
-                                <VStack spacing={6} textAlign="center" w="full">
+                    {/* Mobile Drawer Menu - iOS style */}
+                    <Drawer isOpen={isOpen} placement="right" onClose={closeMenu} size="full">
+                        <DrawerOverlay bg="rgba(0,0,0,0.4)" backdropFilter="blur(5px)" />
+                        <DrawerContent
+                            bg={colorMode === 'light' ? 'rgba(242, 242, 247, 0.95)' : 'rgba(28, 28, 30, 0.95)'}
+                            maxW="xs"
+                            ml="auto"
+                            borderLeft={colorMode === 'light' ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)'}
+                        >
+                            <DrawerCloseButton
+                                size="lg"
+                                color={currentColors.text}
+                                top="4"
+                                right="4"
+                                _hover={{ bg: 'transparent' }}
+                            />
+                            <DrawerBody
+                                display="flex"
+                                flexDir="column"
+                                alignItems="stretch"
+                                justifyContent="flex-start"
+                                p={6}
+                                pt="16"
+                            >
+                                <VStack spacing={2} textAlign="left" w="full">
                                     {navItems.map(({ label, href }) => {
                                         const sectionId = href.replace('#', '');
                                         return (
-                                            <MotionLink
+                                            <MotionButton
                                                 key={label}
+                                                as="a"
                                                 href={href}
-                                                fontSize="lg"  // Lớn hơn cho dễ chạm
-                                                fontWeight="medium"
+                                                variant="ghost"
+                                                justifyContent="flex-start"
+                                                fontSize="md"
+                                                fontWeight="500"
+                                                fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                                                 px={4}
-                                                py={3}  // Padding rộng hơn cho mobile
-                                                rounded="lg"  // Bo góc nhẹ
-                                                w="full"  // Chiếm full width
-                                                bg={activeSection === sectionId ? '#3182ce' : 'transparent'}
-                                                color={activeSection === sectionId ? 'white' : colorMode === 'light' ? 'gray.800' : 'gray.100'}
+                                                py={3}
+                                                rounded="lg"
+                                                w="full"
+                                                bg={activeSection === sectionId ? currentColors.primary : 'transparent'}
+                                                color={activeSection === sectionId ? 'white' : currentColors.text}
                                                 _hover={{
-                                                    bg: activeSection === sectionId ? '#2563eb' : colorMode === 'light' ? 'gray.100' : 'gray.700',
+                                                    bg: activeSection === sectionId ? currentColors.primary : colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)',
                                                 }}
                                                 onClick={() => handleLinkClick(sectionId)}
-                                                whileHover={{ scale: 1.02 }}  // Hiệu ứng nhẹ hơn
-                                                whileTap={{
-                                                    scale: 0.98,
-                                                    backgroundColor: '#3182ce20'  // Hiệu ứng ấn rõ ràng
-                                                }}
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.98 }}
                                                 transition={{
-                                                    duration: 0.15,  // Thời gian ngắn hơn
-                                                    ease: "easeOut"
+                                                    type: 'spring',
+                                                    damping: 15,
+                                                    stiffness: 300
                                                 }}
                                             >
                                                 {label}
-                                            </MotionLink>
+                                            </MotionButton>
                                         );
                                     })}
 
-                                    {/* 📱 Mobile: About us + Login/Profile */}
-                                    <VStack spacing={4} w="full" maxW="xs" pt={8}>
+                                    {/* Mobile: Action buttons */}
+                                    <VStack spacing={3} w="full" pt={8}>
                                         <MotionButton
                                             onClick={handleOpenLinks}
                                             w="full"
-                                            bg="#3182ce"
-                                            color="white"
-                                            px={6}
+                                            size="md"
+                                            px={4}
                                             py={3}
-                                            rounded="full"
-                                            fontWeight="medium"
-                                            _hover={{ bg: '#2563eb' }}
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
+                                            rounded="lg"
+                                            bg={currentColors.primary}
+                                            color="white"
+                                            fontWeight="500"
+                                            fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                            _hover={{ bg: colorMode === 'light' ? '#0066CC' : '#0A78E6' }}
+                                            whileHover={{ scale: 1.01 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            transition={{
+                                                type: 'spring',
+                                                damping: 15,
+                                                stiffness: 300
+                                            }}
                                         >
-                                            About us
+                                            About
                                         </MotionButton>
 
                                         {user ? (
-                                            <MotionLink
+                                            <MotionButton
                                                 as={RouterLink}
                                                 to={`${user.username}`}
+                                                variant="ghost"
+                                                justifyContent="flex-start"
+                                                w="full"
+                                                size="md"
                                                 px={4}
-                                                py={2}
-                                                fontSize="md"
-                                                fontWeight="medium"
-                                                color={colorMode === 'light' ? '#3182ce' : 'white'}
-                                                _hover={{ color: '#2563eb' }}
-                                                whileHover={{ scale: 1.1 }}
+                                                py={3}
+                                                rounded="lg"
+                                                fontWeight="500"
+                                                fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                                color={currentColors.primary}
+                                                _hover={{ bg: colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)' }}
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                transition={{
+                                                    type: 'spring',
+                                                    damping: 15,
+                                                    stiffness: 300
+                                                }}
                                             >
-                                                <UserCircle />
-
-                                            </MotionLink>
+                                                <UserCircle size={20} style={{ marginRight: 8 }} />
+                                                My Profile
+                                            </MotionButton>
                                         ) : (
-                                            <MotionLink
-                                                href="/auth"
+                                            <MotionButton
+                                                as={RouterLink}
+                                                to="/auth"
+                                                variant="ghost"
+                                                justifyContent="flex-start"
+                                                w="full"
+                                                size="md"
                                                 px={4}
-                                                py={2}
-                                                fontSize="sm"
-                                                fontWeight="medium"
-                                                color={colorMode === 'light' ? '#3182ce' : 'white'}
-                                                _hover={{ color: '#2563eb' }}
-                                                whileHover={{ scale: 1.1 }}
+                                                py={3}
+                                                rounded="lg"
+                                                fontWeight="500"
+                                                fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                                color={currentColors.primary}
+                                                _hover={{ bg: colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)' }}
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                transition={{
+                                                    type: 'spring',
+                                                    damping: 15,
+                                                    stiffness: 300
+                                                }}
                                             >
-                                                Login
-                                            </MotionLink>
+                                                Sign In
+                                            </MotionButton>
                                         )}
 
                                         {user && (
                                             <MotionButton
                                                 onClick={handleLogout}
-                                                leftIcon={<HiOutlineLogout />}
-                                                bgGradient="linear(to-r, red.400, pink.400)"
-                                                color="white"
-                                                px={5}
-                                                py={2}
-                                                rounded="full"
-                                                fontSize="sm"
-                                                fontWeight="medium"
-                                                _hover={{ bgGradient: "linear(to-r, red.500, pink.500)", boxShadow: "lg" }}
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
+                                                variant="ghost"
+                                                justifyContent="flex-start"
+                                                w="full"
+                                                size="md"
+                                                px={4}
+                                                py={3}
+                                                rounded="lg"
+                                                fontWeight="500"
+                                                fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                                color="#FF453A"
+                                                _hover={{ bg: colorMode === 'light' ? 'rgba(255, 69, 58, 0.1)' : 'rgba(255, 69, 58, 0.1)' }}
+                                                whileHover={{ scale: 1.01 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                transition={{
+                                                    type: 'spring',
+                                                    damping: 15,
+                                                    stiffness: 300
+                                                }}
                                             >
-                                                Logout
+                                                <HiOutlineLogout style={{ marginRight: 8 }} />
+                                                Log Out
                                             </MotionButton>
                                         )}
 
+                                        {/* Theme toggle in mobile menu */}
+                                        <MotionButton
+                                            onClick={toggleColorMode}
+                                            variant="ghost"
+                                            justifyContent="flex-start"
+                                            w="full"
+                                            size="md"
+                                            px={4}
+                                            py={3}
+                                            rounded="lg"
+                                            fontWeight="500"
+                                            fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                            color={currentColors.text}
+                                            _hover={{ bg: colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)' }}
+                                            whileHover={{ scale: 1.01 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            transition={{
+                                                type: 'spring',
+                                                damping: 15,
+                                                stiffness: 300
+                                            }}
+                                        >
+                                            {colorMode === 'light' ? (
+                                                <Moon size={20} style={{ marginRight: 8 }} />
+                                            ) : (
+                                                <Sun size={20} style={{ marginRight: 8 }} />
+                                            )}
+                                            {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+                                        </MotionButton>
                                     </VStack>
                                 </VStack>
                             </DrawerBody>
                         </DrawerContent>
                     </Drawer>
-
                 </Flex>
-
             </MotionBox>
 
             {/* Popup hiển thị khi bấm About us */}
             <LinksPopup isOpen={isLinksOpen} onClose={closeLinks} />
-            {/* <NotificationPopup isOpen={isLinksOpen} onClose={closeLinks} message='Cho tớ tiền đi mà Quân' /> */}
         </>
     );
 };

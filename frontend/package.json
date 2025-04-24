@@ -19,6 +19,7 @@
     "@tailwindcss/vite": "^4.1.4",
     "animejs": "^4.0.1",
     "framer-motion": "^12.7.4",
+    "lucide-react": "^0.503.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-draggable": "^4.4.6",
@@ -28,6 +29,13 @@
     "react-wavify": "^1.11.1",
     "react-window": "^1.8.11",
     "recoil": "^0.7.7",
+    "survey-analytics": "^2.0.0",
+    "survey-core": "^2.0.0",
+    "survey-creator-core": "^2.0.0",
+    "survey-creator-react": "^2.0.0",
+    "survey-pdf": "^2.0.0",
+    "survey-react": "^1.12.33",
+    "survey-react-ui": "^2.0.0",
     "tailwindcss": "^4.1.4"
   },
   "devDependencies": {

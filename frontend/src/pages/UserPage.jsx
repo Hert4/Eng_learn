@@ -13,17 +13,24 @@ import {
     Thead, Tbody, Tr, Th, Td, Badge,
     Spinner
 } from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom"
 import useGetUserProfile from "../hooks/useGetUserProfile";
 import { WarningTwoIcon, EditIcon } from "@chakra-ui/icons";
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Calendar, Lock, Award } from 'lucide-react';
+import useShowToast from "../hooks/showToast";
+import userAtom from "../atom/userAtom";
+import { useParams } from "react-router-dom";
+import { useRecoilState, useRecoilValue } from "recoil";
 
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
 
 const UserProfile = () => {
     const { user, loading } = useGetUserProfile();
+    const [currentUser, setCurrentUser] = useRecoilState(userAtom)
+    const showToast = useShowToast()
     const { colorMode } = useColorMode();
     const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
     const { isOpen: isPasswordOpen, onOpen: onPasswordOpen, onClose: onPasswordClose } = useDisclosure();
@@ -31,10 +38,10 @@ const UserProfile = () => {
 
     // Form states
     const [formData, setFormData] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
-        phone: user?.phone || '',
-        profilePic: user?.profilePic || ''
+        username: currentUser.username || '',
+        email: currentUser.email || '',
+        // phone: user?.phone || '',
+        // profilePic: user?.profilePic || '' /waut cloud
     });
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
@@ -141,34 +148,78 @@ const UserProfile = () => {
         try {
             // Gọi API cập nhật thông tin
             // await updateProfileAPI(formData);
+            const res = await fetch(`/api/users/update/${user._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        username: formData.username,
+                        email: formData.email
+                    }
+                )
+            })
+            // showToast("Success", `Click upadeted api/users/update/${user._id}`, "success")
+            const data = await res.json()
+            if (data.error) {
+                showToast('Error', data.error, 'error')
+                return
+            }
+            showToast('Success', 'Update profile successfully!', 'success')
+            setCurrentUser(data)
+            localStorage.setItem('user', JSON.stringify(data))
             setIsUpdating(false);
             onEditClose();
-            // Hiển thị thông báo thành công
         } catch (error) {
             setIsUpdating(false);
-            // Hiển thị thông báo lỗi
+            showToast('Error', error, 'error')
+
+        } finally {
+            setIsUpdating(false);
+
         }
     };
 
     const handlePasswordUpdate = async () => {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            // Hiển thị thông báo mật khẩu không khớp
+            showToast("Erorr", "Your new password does not match", "error")
             return;
         }
-
         setIsUpdating(true);
         try {
+
             // Gọi API đổi mật khẩu
             // await updatePasswordAPI({
             //     currentPassword: passwordData.currentPassword,
             //     newPassword: passwordData.newPassword
             // });
+            const res = await fetch(`/api/users/update/${user._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        currentPassword: passwordData.currentPassword,
+                        newPassword: passwordData.newPassword
+                    }
+                )
+            })
+            // showToast("Success", `Click upadeted api/users/update/${user._id}`, "success")
+            const data = await res.json()
+            if (data.error) {
+                showToast('Error', data.error, 'error')
+                return
+            }
             setIsUpdating(false);
+            showToast('Success', 'Update password successfully!', 'success')
             onPasswordClose();
-            // Hiển thị thông báo thành công
         } catch (error) {
             setIsUpdating(false);
-            // Hiển thị thông báo lỗi
+            showToast('Error', error, 'error')
+        } finally {
+            setIsUpdating(false)
         }
     };
 
@@ -263,51 +314,55 @@ const UserProfile = () => {
                                     </HStack>
                                 )}
                             </VStack>
+                            {currentUser.username === user.username && (
 
-                            <HStack spacing={3} pt={2}>
-                                <MotionButton
-                                    onClick={onEditOpen}
-                                    size="sm"
-                                    px={4}
-                                    py={2}
-                                    rounded="lg"
-                                    bg={currentColors.primary}
-                                    color="white"
-                                    fontWeight="500"
-                                    fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                                    _hover={{ bg: colorMode === 'light' ? '#0066CC' : '#0A78E6' }}
-                                    whileHover={{ scale: 1.03 }}
-                                    whileTap={{ scale: 0.97 }}
-                                    leftIcon={<EditIcon boxSize={3} />}
-                                >
-                                    Edit Profile
-                                </MotionButton>
+                                <HStack spacing={3} pt={2}>
+                                    <MotionButton
+                                        onClick={onEditOpen}
+                                        size="sm"
+                                        px={4}
+                                        py={2}
+                                        rounded="lg"
+                                        bg={currentColors.primary}
+                                        color="white"
+                                        fontWeight="500"
+                                        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                        _hover={{ bg: colorMode === 'light' ? '#0066CC' : '#0A78E6' }}
+                                        whileHover={{ scale: 1.03 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        leftIcon={<EditIcon boxSize={3} />}
+                                    >
+                                        Edit Profile
+                                    </MotionButton>
 
-                                <MotionButton
-                                    onClick={onPasswordOpen}
-                                    size="sm"
-                                    px={4}
-                                    py={2}
-                                    rounded="lg"
-                                    bg="transparent"
-                                    borderWidth="1px"
-                                    borderColor={currentColors.primary}
-                                    color={currentColors.primary}
-                                    fontWeight="500"
-                                    fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                                    _hover={{ bg: colorMode === 'light' ? 'rgba(0, 122, 255, 0.1)' : 'rgba(10, 132, 255, 0.1)' }}
-                                    whileHover={{ scale: 1.03 }}
-                                    whileTap={{ scale: 0.97 }}
-                                    leftIcon={<Lock size={16} />}
-                                >
-                                    Change Password
-                                </MotionButton>
-                            </HStack>
+                                    <MotionButton
+                                        onClick={onPasswordOpen}
+                                        size="sm"
+                                        px={4}
+                                        py={2}
+                                        rounded="lg"
+                                        bg="transparent"
+                                        borderWidth="1px"
+                                        borderColor={currentColors.primary}
+                                        color={currentColors.primary}
+                                        fontWeight="500"
+                                        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                        _hover={{ bg: colorMode === 'light' ? 'rgba(0, 122, 255, 0.1)' : 'rgba(10, 132, 255, 0.1)' }}
+                                        whileHover={{ scale: 1.03 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        leftIcon={<Lock size={16} />}
+                                    >
+                                        Change Password
+                                    </MotionButton>
+
+                                </HStack>
+                            )}
+
                         </VStack>
                     </Stack>
                 </MotionBox>
 
-                {/* Exam History Section - iOS Style */}
+                {/* Exam History Section */}
                 <MotionBox
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -319,7 +374,6 @@ const UserProfile = () => {
                             fontWeight="600"
                             fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                         >
-                            <Award size={20} style={{ marginRight: 8 }} />
                             Exam History
                         </Text>
                     </HStack>
@@ -418,11 +472,11 @@ const UserProfile = () => {
                             <VStack spacing={4}>
                                 <FormControl>
                                     <FormLabel fontSize="sm" color={colorMode === 'light' ? 'gray.600' : 'gray.400'}>
-                                        Full Name
+                                        Username
                                     </FormLabel>
                                     <Input
-                                        name="name"
-                                        value={formData.name}
+                                        name="username"
+                                        value={formData.username}
                                         onChange={handleInputChange}
                                         borderRadius="lg"
                                         fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
@@ -443,7 +497,7 @@ const UserProfile = () => {
                                     />
                                 </FormControl>
 
-                                <FormControl>
+                                {/* <FormControl>
                                     <FormLabel fontSize="sm" color={colorMode === 'light' ? 'gray.600' : 'gray.400'}>
                                         Phone Number
                                     </FormLabel>
@@ -454,9 +508,9 @@ const UserProfile = () => {
                                         borderRadius="lg"
                                         fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                                     />
-                                </FormControl>
+                                </FormControl> */}
 
-                                <FormControl>
+                                {/* <FormControl>
                                     <FormLabel fontSize="sm" color={colorMode === 'light' ? 'gray.600' : 'gray.400'}>
                                         Profile Picture URL
                                     </FormLabel>
@@ -467,7 +521,8 @@ const UserProfile = () => {
                                         borderRadius="lg"
                                         fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
                                     />
-                                </FormControl>
+                                </FormControl> */}
+                                {/* add image process here waiting for cloud */}
                             </VStack>
                         </ModalBody>
                         <ModalFooter>
@@ -482,6 +537,8 @@ const UserProfile = () => {
                                 </Button>
                                 <Button
                                     onClick={handleProfileUpdate}
+                                    as={RouterLink}
+                                    to={`/${currentColors.username}`}
                                     bg={currentColors.primary}
                                     color="white"
                                     borderRadius="lg"
@@ -584,7 +641,7 @@ const UserProfile = () => {
                     </ModalContent>
                 </Modal>
             </VStack>
-        </Container>
+        </Container >
     );
 };
 

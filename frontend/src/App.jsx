@@ -14,20 +14,16 @@ function App() {
   const location = useLocation()
   const [showHeader, setShowHeader] = useState(false)
 
-  // Danh sách các route không hiển thị header
+  // taoj list các route không hiển thị header
   const noHeaderRoutes = useMemo(() => ['/auth'], [])
 
   useEffect(() => {
-    // Kiểm tra xem route hiện tại có trong danh sách noHeaderRoutes không
     setShowHeader(user && !noHeaderRoutes.includes(location.pathname))
   }, [location.pathname, user, noHeaderRoutes])
 
   return (
     <Box position="relative" w="full" minHeight="100vh">
-      {/* Header chỉ hiển thị khi cần */}
       {showHeader && <Header user={user} />}
-
-      {/* Main content với padding linh hoạt */}
       <Box
         pt={showHeader ? { base: "60px", md: "70px" } : "0"}
         minHeight={showHeader ? "calc(100vh - 70px)" : "100vh"}

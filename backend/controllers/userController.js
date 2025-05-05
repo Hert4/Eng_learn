@@ -102,13 +102,64 @@ const getUserProfile = async(req, res) => {
       }
       res.status(200).json(user)
     }catch(error){
+
       res.status(500).json({error: error.message})
     }
+}
+
+const updateUser = async(req, res) => {
+    const {username, email, currentPassword, newPassword} = req.body
+    const userId = req.user._id
+    // console.log(username)
+    // console.log(email)
+    // console.log(currentPassword)
+    // console.log(newPassword)
+    try {
+        let user = await User.findById(userId)
+        if(!user) return res.status(404).json({error: "User not found"})
+        
+        //start handle pwd
+        console.log("New pwd", newPassword)
+        
+        if(currentPassword && newPassword) {
+            const isMatch = await bcrypt.compare(currentPassword.toString(), user.password)
+          
+            if(!isMatch) {
+              res.status(401).json({
+                error: "Your current password is wrong !"
+              })
+              return
+            }
+    
+            if (newPassword){
+              const salt = await bcrypt.genSalt(10);
+              const hashedPassword = await bcrypt.hash(newPassword.toString(), salt);
+              user.password = hashedPassword
+            }
+        }
+        
+        // for profile updated
+        user.email = email || user?.email
+        user.username = username || user?.username
+
+        //save to db
+        user = await user.save()
+        user.password = null
+
+        res.status(200).json(user);
+    }catch(error){
+        console.log(error)
+        res.status(500).json({
+          error: error.message
+        })
+    }
+    
 }
 
 export {
     signupUser,
     loginUser,
     logoutUser,
-    getUserProfile
+    getUserProfile,
+    updateUser
 };

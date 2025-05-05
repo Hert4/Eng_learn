@@ -16,11 +16,11 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaTwitter, FaYoutube, FaInstagram, FaDiscord } from 'react-icons/fa';
-import { SiBuymeacoffee, SiBluesky } from 'react-icons/si';
-import { MdPrint, MdStore } from 'react-icons/md';
+// import { FaTwitter, FaYoutube, FaInstagram, FaDiscord } from 'react-icons/fa';
+// import { SiBuymeacoffee, SiBluesky } from 'react-icons/si';
+// import { MdPrint, MdStore } from 'react-icons/md';
 import LinksPopup from './Popup/LinksPopup.jsx';
-import NotificationPopup from './Popup/NoficationPopup.jsx';
+// import NotificationPopup from './Popup/NoficationPopup.jsx';
 import { useSetRecoilState } from 'recoil';
 import userAtom from '../atom/userAtom.js';
 import { HiOutlineLogout } from "react-icons/hi";
@@ -58,8 +58,8 @@ const Header = ({ user }) => {
     };
 
     const navItems = [
-        { label: 'Home', href: '#' },
-        { label: 'Exercise', href: '#exercise' },
+        { label: 'Home', href: '/' },
+        { label: 'Exercise', href: '/exercise' },
         { label: 'Test', href: '#test' },
         { label: 'FAQ', href: '#faq' },
     ];
@@ -91,7 +91,7 @@ const Header = ({ user }) => {
         }
     }
 
-    // iOS color palette
+    // custome color palette
     const iosColors = {
         light: {
             primary: '#007AFF',
@@ -143,7 +143,7 @@ const Header = ({ user }) => {
                     align="center"
                     justify="space-between"
                 >
-                    {/* Logo with iOS-style typography */}
+                    {/* Logo here */}
                     <MotionLink
                         as={Link}
                         href="/"
@@ -166,7 +166,7 @@ const Header = ({ user }) => {
                         Opic
                     </MotionLink>
 
-                    {/* Desktop nav links - iOS-style segmented control */}
+                    {/* Desktop nav links  */}
                     <Flex
                         display={{ base: 'none', md: 'flex' }}
                         align="center"
@@ -181,8 +181,8 @@ const Header = ({ user }) => {
                         {navItems.map(({ label, href }) => (
                             <MotionButton
                                 key={label}
-                                as="a"
-                                href={href}
+                                as={RouterLink}
+                                to={`${href}`}
                                 fontSize="sm"
                                 fontWeight="500"
                                 fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
@@ -211,7 +211,7 @@ const Header = ({ user }) => {
 
                     {/* Desktop: Right side buttons */}
                     <Flex display={{ base: 'none', md: 'flex' }} align="center" gap={3}>
-                        {/* Theme toggle - iOS style */}
+                        {/* Theme toggle*/}
                         <MotionButton
                             onClick={toggleColorMode}
                             variant="ghost"
@@ -234,7 +234,7 @@ const Header = ({ user }) => {
                             )}
                         </MotionButton>
 
-                        {/* Login or Profile (Desktop) */}
+                        {/* Login or Profile for desktop */}
                         {user ? (
                             <MotionButton
                                 as={RouterLink}
@@ -282,6 +282,8 @@ const Header = ({ user }) => {
                         {user && (
                             <MotionButton
                                 onClick={handleLogout}
+                                as={RouterLink}
+                                to={"/auth"}
                                 size="sm"
                                 px={4}
                                 py={2}
@@ -303,7 +305,7 @@ const Header = ({ user }) => {
                             </MotionButton>
                         )}
 
-                        {/* About us - iOS-style filled button */}
+                        {/* About us btn */}
                         <MotionButton
                             onClick={handleOpenLinks}
                             size="sm"
@@ -327,7 +329,7 @@ const Header = ({ user }) => {
                         </MotionButton>
                     </Flex>
 
-                    {/* Mobile: Hamburger menu */}
+                    {/* Mobile menu */}
                     <IconButton
                         display={{ base: 'flex', md: 'none' }}
                         icon={<Menu size={24} />}
@@ -341,7 +343,7 @@ const Header = ({ user }) => {
                         bg={colorMode === 'light' ? 'rgba(229, 229, 234, 0.5)' : 'rgba(44, 44, 46, 0.5)'}
                     />
 
-                    {/* Mobile Drawer Menu - iOS style */}
+                    {/* Mobile Drawer Menu  */}
                     <Drawer isOpen={isOpen} placement="right" onClose={closeMenu} size="full">
                         <DrawerOverlay bg="rgba(0,0,0,0.4)" backdropFilter="blur(5px)" />
                         <DrawerContent
@@ -371,8 +373,8 @@ const Header = ({ user }) => {
                                         return (
                                             <MotionButton
                                                 key={label}
-                                                as="a"
-                                                href={href}
+                                                as={RouterLink}
+                                                to={`${href}`}
                                                 variant="ghost"
                                                 justifyContent="flex-start"
                                                 fontSize="md"

@@ -1,333 +1,559 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     Box,
     Button,
-    Flex,
     VStack,
     Heading,
-    Stepper,
-    Step,
-    StepIndicator,
-    StepStatus,
-    StepTitle,
-    StepSeparator,
-    useSteps,
-    useColorMode,
-    useBreakpointValue,
     Text,
-    Icon
+    Input,
+    RadioGroup,
+    Radio,
+    Stack,
+    useColorMode,
+    Flex,
+    useToast,
+    IconButton,
+    Progress,
+    Card,
+    CardBody,
+    FormControl,
+    FormLabel,
+    Textarea,
+    Avatar,
+    HStack,
+    Tooltip
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Survey } from "survey-react-ui";
-import "survey-core/survey-core.min.css";
-import { ChevronLeft } from 'lucide-react';
+import { Mic, Check, ChevronLeft, ChevronRight, Upload, Volume2 } from "lucide-react";
+import WaveSurfer from "wavesurfer.js";
 
 const MotionBox = motion(Box);
 
-// iOS-style CSS overrides
-const applyIOSTheme = () => {
-    const iosTheme = {
-        "--sjs-primary-backcolor": "#007AFF",
-        "--sjs-primary-forecolor": "white",
-        "--sjs-general-backcolor": "#FFFFFF",
-        "--sjs-general-backcolor-dark": "#1C1C1E",
-        "--sjs-general-forecolor": "#1C1C1E",
-        "--sjs-general-forecolor-dark": "#FFFFFF",
-        "--sjs-font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        "--sjs-questionpanel-backcolor": "rgba(255,255,255,0.8)",
-        "--sjs-questionpanel-backcolor-dark": "rgba(44,44,46,0.8)",
-        "--sjs-editor-backcolor": "rgba(242,242,247,0.8)",
-        "--sjs-editor-backcolor-dark": "rgba(28,28,30,0.8)",
-        "--sjs-border-default": "rgba(0,0,0,0.1)",
-        "--sjs-border-default-dark": "rgba(255,255,255,0.1)",
-        "--sjs-shadow-small": "0 1px 3px rgba(0,0,0,0.1)",
-        "--sjs-shadow-medium": "0 4px 12px rgba(0,0,0,0.1)",
-        "--sjs-shadow-large": "0 8px 24px rgba(0,0,0,0.1)",
-        "--sjs-border-radius": "12px",
-        "--sjs-font-size": "16px",
-        "--sjs-font-weight": "400",
-        "--sjs-questionpanel-padding": "20px",
-        "--sjs-questionpanel-radius": "16px",
-        "--sjs-question-title": "600"
-    };
-
-    Object.entries(iosTheme).forEach(([key, value]) => {
-        document.documentElement.style.setProperty(key, value);
-    });
-};
-
-// Survey structure
-const surveyJSONs = [
-    {
-        title: "Personal Info",
-        pages: [
-            {
-                questions: [
-                    {
-                        type: "radiogroup",
-                        name: "ageGroup",
-                        title: "What is your age group?",
-                        isRequired: true,
-                        choices: ["Under 18", "18-35", "36-60", "Above 60"],
-                    },
-                    {
-                        type: "radiogroup",
-                        name: "studentStatus",
-                        title: "Are you a student?",
-                        isRequired: true,
-                        visibleIf: "{ageGroup} = 'Under 18'",
-                        choices: ["Yes", "No"],
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        title: "Device Preferences",
-        pages: [
-            {
-                questions: [
-                    {
-                        type: "radiogroup",
-                        name: "deviceUsage",
-                        title: "Which device do you use most?",
-                        choices: ["iPhone", "Android", "Windows", "Mac"],
-                    },
-                    {
-                        type: "radiogroup",
-                        name: "iPhoneFeature",
-                        title: "Favorite iPhone feature?",
-                        visibleIf: "{deviceUsage} = 'iPhone'",
-                        choices: ["Face ID", "iMessage", "AirDrop", "Ecosystem"],
-                    },
-                    {
-                        type: "radiogroup",
-                        name: "androidFeature",
-                        title: "Favorite Android feature?",
-                        visibleIf: "{deviceUsage} = 'Android'",
-                        choices: ["Google Assistant", "Customization", "Expandable Storage"],
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        title: "Feedback",
-        pages: [
-            {
-                questions: [
-                    {
-                        type: "radiogroup",
-                        name: "recommend",
-                        title: "Would you recommend your current device to others?",
-                        choices: ["Yes", "No", "Maybe"],
-                    },
-                    {
-                        type: "comment",
-                        name: "suggestions",
-                        title: "Any suggestions for improvement?",
-                        visibleIf: "{recommend} anyof ['No', 'Maybe']",
-                    },
-                ],
-            },
-        ],
-    },
+const stages = [
+    { title: "Personal Information", progress: 20 },
+    { title: "Language Background", progress: 40 },
+    { title: "Microphone Setup", progress: 60 },
+    { title: "Speaking Test", progress: 80 },
+    { title: "Completion", progress: 100 }
 ];
 
-const SurveyPage = () => {
-    const { colorMode } = useColorMode();
-    const [step, setStep] = useState(0);
-    const [surveyData, setSurveyData] = useState([]);
-    const isMobile = useBreakpointValue({ base: true, md: false });
-
-    // Apply iOS theme on mount and when color mode changes
-    React.useEffect(() => {
-        applyIOSTheme();
-    }, [colorMode]);
-
-    const steps = surveyJSONs.map((s, i) => ({
-        title: s.title,
-        description: `Step ${i + 1}`,
-    }));
-
-    const { activeStep, setActiveStep } = useSteps({
-        index: step,
-        count: steps.length,
-    });
-
-    const handleComplete = (data) => {
-        const newSurveyData = [...surveyData];
-        newSurveyData[step] = data.data;
-        setSurveyData(newSurveyData);
-
-        if (step < surveyJSONs.length - 1) {
-            setStep(step + 1);
-            setActiveStep(step + 1);
-        } else {
-            console.log("Survey completed:", newSurveyData);
-            // Here you would typically submit the data to your backend
-        }
-    };
-
-    // iOS color palette
-    const iosColors = {
-        light: {
-            primary: '#007AFF',
-            background: 'rgba(242, 242, 247, 1)',
-            card: 'rgba(255, 255, 255, 0.8)',
-            text: '#1C1C1E',
-            border: 'rgba(0, 0, 0, 0.1)'
+const questions = {
+    personal: [
+        {
+            id: "name",
+            label: "What's your name?",
+            type: "text",
+            placeholder: "Enter your full name"
         },
-        dark: {
-            primary: '#0A84FF',
-            background: 'rgba(28, 28, 30, 1)',
-            card: 'rgba(44, 44, 46, 0.8)',
-            text: '#FFFFFF',
-            border: 'rgba(255, 255, 255, 0.1)'
+        {
+            id: "ageGroup",
+            label: "Which age group do you belong to?",
+            type: "radio",
+            options: [
+                { value: "under18", label: "Under 18" },
+                { value: "18to35", label: "18-35" },
+                { value: "36to60", label: "36-60" },
+                { value: "60plus", label: "60+" }
+            ]
+        }
+    ],
+    language: [
+        {
+            id: "englishLevel",
+            label: "How would you describe your English proficiency?",
+            type: "radio",
+            options: [
+                { value: "beginner", label: "Beginner" },
+                { value: "intermediate", label: "Intermediate" },
+                { value: "advanced", label: "Advanced" }
+            ]
+        },
+        {
+            id: "learningGoals",
+            label: "What are your main goals for learning English?",
+            type: "textarea",
+            placeholder: "e.g., Travel, Work, Study abroad..."
+        }
+    ],
+    speakingTest: [
+        {
+            id: "topic",
+            label: "Tell us about your favorite hobby or activity",
+            description: "You'll have 2 minutes to speak about this topic. Think about why you enjoy it, how often you do it, and any memorable experiences."
+        }
+    ]
+};
+
+const SurveyPage = () => {
+    const [stage, setStage] = useState(0);
+    const [formData, setFormData] = useState({});
+    const [recording, setRecording] = useState(false);
+    const [audioUrl, setAudioUrl] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
+    const mediaRecorderRef = useRef(null);
+    const [audioChunks, setAudioChunks] = useState([]);
+    const audioRef = useRef(null);
+    const wavesurferRef = useRef(null);
+    const waveformRef = useRef(null);
+    const { colorMode } = useColorMode();
+    const toast = useToast();
+    const [micAccess, setMicAccess] = useState(false);
+
+    const isLight = colorMode === "light";
+
+    // Initialize WaveSurfer
+    useEffect(() => {
+        if (waveformRef.current && !wavesurferRef.current) {
+            wavesurferRef.current = WaveSurfer.create({
+                container: waveformRef.current,
+                waveColor: isLight ? '#4299E1' : '#90CDF4',
+                progressColor: isLight ? '#3182CE' : '#63B3ED',
+                cursorColor: '#718096',
+                barWidth: 2,
+                barRadius: 3,
+                cursorWidth: 1,
+                height: 80,
+                barGap: 2,
+                responsive: true
+            });
+
+            wavesurferRef.current.on('ready', () => {
+                setDuration(wavesurferRef.current.getDuration());
+            });
+
+            wavesurferRef.current.on('audioprocess', () => {
+                setCurrentTime(wavesurferRef.current.getCurrentTime());
+            });
+
+            wavesurferRef.current.on('finish', () => {
+                setIsPlaying(false);
+            });
+        }
+
+        return () => {
+            if (wavesurferRef.current) {
+                wavesurferRef.current.destroy();
+                wavesurferRef.current = null;
+            }
+        };
+    }, [isLight]);
+
+    // Load audio when URL changes
+    useEffect(() => {
+        if (audioUrl && wavesurferRef.current) {
+            wavesurferRef.current.load(audioUrl);
+        }
+    }, [audioUrl]);
+
+    // Check microphone access
+    useEffect(() => {
+        const checkMicAccess = async () => {
+            try {
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+                setMicAccess(true);
+            } catch (err) {
+                setMicAccess(false);
+            }
+        };
+        checkMicAccess();
+    }, []);
+
+    const handleInputChange = (field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            setAudioChunks([]);
+
+            mediaRecorder.start(100); // Collect data every 100ms for smoother visualization
+
+            mediaRecorder.addEventListener("dataavailable", (event) => {
+                if (event.data.size > 0) {
+                    setAudioChunks((prev) => [...prev, event.data]);
+                }
+            });
+
+            mediaRecorder.addEventListener("stop", () => {
+                const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                setAudioUrl(audioUrl);
+                stream.getTracks().forEach(track => track.stop());
+            });
+
+            setRecording(true);
+            toast({
+                title: "Recording started",
+                description: "Speak clearly into your microphone",
+                status: "info",
+                duration: 2000,
+                isClosable: true
+            });
+        } catch (err) {
+            console.error("Recording error:", err);
+            toast({
+                title: "Microphone access denied",
+                description: "Please allow microphone access to continue",
+                status: "error",
+                duration: 5000,
+                isClosable: true
+            });
         }
     };
 
-    const currentColors = iosColors[colorMode];
+    const stopRecording = () => {
+        if (mediaRecorderRef.current?.state !== "inactive") {
+            mediaRecorderRef.current?.stop();
+            setRecording(false);
+            toast({
+                title: "Recording saved",
+                status: "success",
+                duration: 2000,
+                isClosable: true
+            });
+        }
+    };
+
+    const togglePlayback = () => {
+        if (wavesurferRef.current) {
+            wavesurferRef.current.playPause();
+            setIsPlaying(!isPlaying);
+        }
+    };
+
+    const handleNext = () => {
+        if (stage < stages.length - 1) {
+            setStage(stage + 1);
+        }
+    };
+
+    const handleBack = () => {
+        if (stage > 0) {
+            setStage(stage - 1);
+        }
+    };
+
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
+
+    const renderCurrentStage = () => {
+        switch (stage) {
+            case 0: // Personal Information
+                return (
+                    <VStack spacing={6} align="stretch">
+                        {questions.personal.map((question) => (
+                            <FormControl key={question.id}>
+                                <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
+                                    {question.label}
+                                </FormLabel>
+
+                                {question.type === "text" && (
+                                    <Input
+                                        placeholder={question.placeholder}
+                                        value={formData[question.id] || ""}
+                                        onChange={(e) => handleInputChange(question.id, e.target.value)}
+                                        size="lg"
+                                        variant="filled"
+                                    />
+                                )}
+
+                                {question.type === "radio" && (
+                                    <RadioGroup
+                                        value={formData[question.id] || ""}
+                                        onChange={(value) => handleInputChange(question.id, value)}
+                                    >
+                                        <Stack direction="column" spacing={3}>
+                                            {question.options.map((option) => (
+                                                <Radio key={option.value} value={option.value} size="lg">
+                                                    {option.label}
+                                                </Radio>
+                                            ))}
+                                        </Stack>
+                                    </RadioGroup>
+                                )}
+                            </FormControl>
+                        ))}
+                    </VStack>
+                );
+
+            case 1: // Language Background
+                return (
+                    <VStack spacing={6} align="stretch">
+                        {questions.language.map((question) => (
+                            <FormControl key={question.id}>
+                                <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
+                                    {question.label}
+                                </FormLabel>
+
+                                {question.type === "radio" ? (
+                                    <RadioGroup
+                                        value={formData[question.id] || ""}
+                                        onChange={(value) => handleInputChange(question.id, value)}
+                                    >
+                                        <Stack direction="column" spacing={3}>
+                                            {question.options.map((option) => (
+                                                <Radio key={option.value} value={option.value} size="lg">
+                                                    {option.label}
+                                                </Radio>
+                                            ))}
+                                        </Stack>
+                                    </RadioGroup>
+                                ) : (
+                                    <Textarea
+                                        placeholder={question.placeholder}
+                                        value={formData[question.id] || ""}
+                                        onChange={(e) => handleInputChange(question.id, e.target.value)}
+                                        size="lg"
+                                        variant="filled"
+                                        minH="120px"
+                                    />
+                                )}
+                            </FormControl>
+                        ))}
+                    </VStack>
+                );
+
+            case 2: // Microphone Setup
+                return (
+                    <VStack spacing={8} align="center">
+                        <Text fontSize="xl" textAlign="center" fontWeight="semibold">
+                            Let's check your microphone setup
+                        </Text>
+
+                        <Box textAlign="center">
+                            <Tooltip label={micAccess ? "Microphone ready" : "Microphone access required"} placement="top">
+                                <IconButton
+                                    aria-label="Record Mic"
+                                    icon={<Mic size={32} />}
+                                    onClick={recording ? stopRecording : startRecording}
+                                    colorScheme={recording ? "red" : "blue"}
+                                    isRound
+                                    size="lg"
+                                    w="80px"
+                                    h="80px"
+                                    mb={4}
+                                    animation={recording ? "pulse 1.5s infinite" : "none"}
+                                />
+                            </Tooltip>
+                            <Text color={recording ? "green.500" : "gray.500"} fontWeight="medium">
+                                {recording ? "Recording..." : micAccess ? "Click to record" : "Microphone not available"}
+                            </Text>
+                        </Box>
+
+                        {audioUrl && (
+                            <Card w="full" variant="outline">
+                                <CardBody>
+                                    <VStack spacing={4}>
+                                        <Box ref={waveformRef} w="full" />
+                                        <HStack w="full" justify="space-between">
+                                            <Text fontSize="sm" color="gray.500">
+                                                {formatTime(currentTime)} / {formatTime(duration)}
+                                            </Text>
+                                            <Button
+                                                leftIcon={isPlaying ? <Volume2 /> : <Volume2 />}
+                                                onClick={togglePlayback}
+                                                size="sm"
+                                                variant="ghost"
+                                            >
+                                                {isPlaying ? "Pause" : "Play"}
+                                            </Button>
+                                        </HStack>
+                                    </VStack>
+                                </CardBody>
+                            </Card>
+                        )}
+
+                        <Text fontSize="sm" color="gray.500" textAlign="center">
+                            Record a short test to ensure your microphone is working properly.
+                            Speak a few sentences and play it back to verify the quality.
+                        </Text>
+                    </VStack>
+                );
+
+            case 3: // Speaking Test
+                return (
+                    <VStack spacing={8} align="stretch">
+                        {questions.speakingTest.map((question) => (
+                            <Box key={question.id}>
+                                <Text fontSize="xl" fontWeight="semibold" mb={2}>
+                                    {question.label}
+                                </Text>
+                                <Text color="gray.500" mb={6}>
+                                    {question.description}
+                                </Text>
+
+                                <VStack spacing={6}>
+                                    {!recording ? (
+                                        <Button
+                                            colorScheme="blue"
+                                            leftIcon={<Mic />}
+                                            onClick={startRecording}
+                                            size="lg"
+                                            w="full"
+                                        >
+                                            Start Recording
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            colorScheme="red"
+                                            leftIcon={<Mic />}
+                                            onClick={stopRecording}
+                                            size="lg"
+                                            w="full"
+                                        >
+                                            Stop Recording (2:00 max)
+                                        </Button>
+                                    )}
+
+                                    {audioUrl && (
+                                        <Card w="full" variant="outline">
+                                            <CardBody>
+                                                <VStack spacing={4}>
+                                                    <Box ref={waveformRef} w="full" />
+                                                    <HStack w="full" justify="space-between">
+                                                        <Text fontSize="sm" color="gray.500">
+                                                            {formatTime(currentTime)} / {formatTime(duration)}
+                                                        </Text>
+                                                        <Button
+                                                            leftIcon={isPlaying ? <Volume2 /> : <Volume2 />}
+                                                            onClick={togglePlayback}
+                                                            size="sm"
+                                                            variant="ghost"
+                                                        >
+                                                            {isPlaying ? "Pause" : "Play"}
+                                                        </Button>
+                                                    </HStack>
+                                                </VStack>
+                                            </CardBody>
+                                        </Card>
+                                    )}
+
+                                    <Text fontSize="sm" color="gray.500">
+                                        You can record multiple times until you're satisfied with your response.
+                                    </Text>
+                                </VStack>
+                            </Box>
+                        ))}
+                    </VStack>
+                );
+
+            case 4: // Completion
+                return (
+                    <VStack spacing={8} textAlign="center" py={8}>
+                        <Box
+                            as={Check}
+                            size={80}
+                            color="#38A169"
+                            strokeWidth={2}
+                            mx="auto"
+                        />
+                        <Heading size="lg">Test Submitted Successfully!</Heading>
+                        <Text fontSize="lg" color="gray.500">
+                            Thank you for completing the OPIC exercise test. Your results will be reviewed shortly.
+                        </Text>
+                        <Button
+                            colorScheme="blue"
+                            size="lg"
+                            mt={6}
+                            onClick={() => {
+                                setStage(0);
+                                setFormData({});
+                                setAudioUrl(null);
+                            }}
+                        >
+                            Start New Test
+                        </Button>
+                    </VStack>
+                );
+
+            default:
+                return null;
+        }
+    };
 
     return (
         <Flex
             minH="100vh"
-            bg={currentColors.background}
             align="center"
             justify="center"
+            bg={isLight ? "gray.50" : "gray.800"}
             p={4}
         >
-            <VStack
-                spacing={6}
-                w="full"
-                maxW="500px"
-            >
-                {/* Header */}
-                <Box textAlign="center" w="full">
+            <VStack spacing={8} w="full" maxW="2xl">
+                <VStack spacing={2} w="full">
                     <Heading
-                        fontSize="xl"
-                        fontWeight="600"
-                        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                        color={currentColors.text}
+                        size="xl"
+                        fontWeight="bold"
+                        color={isLight ? "blue.600" : "blue.300"}
                     >
-                        Device Preference Survey
+                        OPIC Speaking Assessment
                     </Heading>
-                    <Text
-                        color={colorMode === 'light' ? 'gray.600' : 'gray.400'}
-                        fontSize="sm"
-                        mt={1}
-                    >
-                        Help us understand your preferences
+                    <Text color="gray.500">
+                        {stages[stage].title}
                     </Text>
-                </Box>
-
-                {/* iOS-style Stepper */}
-                <Box w="full" px={isMobile ? 2 : 0}>
-                    <Stepper
+                    <Progress
+                        value={stages[stage].progress}
                         size="sm"
-                        index={activeStep}
-                        gap="0"
+                        w="full"
                         colorScheme="blue"
-                    >
-                        {steps.map((step, index) => (
-                            <Step key={index}>
-                                <StepIndicator
-                                    border="none"
-                                    bg="transparent"
-                                >
-                                    <StepStatus
-                                        complete={
-                                            <Box
-                                                bg={currentColors.primary}
-                                                w="6px"
-                                                h="6px"
-                                                borderRadius="full"
-                                            />
-                                        }
-                                        incomplete={
-                                            <Box
-                                                bg={colorMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}
-                                                w="6px"
-                                                h="6px"
-                                                borderRadius="full"
-                                            />
-                                        }
-                                        active={
-                                            <Box
-                                                bg={currentColors.primary}
-                                                w="6px"
-                                                h="6px"
-                                                borderRadius="full"
-                                            />
-                                        }
-                                    />
-                                </StepIndicator>
-                                {!isMobile && (
-                                    <Box flexShrink={0}>
-                                        <StepTitle
-                                            fontSize="sm"
-                                            fontWeight="500"
-                                            color={index <= activeStep ? currentColors.text : (colorMode === 'light' ? 'gray.500' : 'gray.500')}
-                                        >
-                                            {step.title}
-                                        </StepTitle>
-                                    </Box>
-                                )}
-                                {index < steps.length - 1 && (
-                                    <StepSeparator
-                                        bg={colorMode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}
-                                        h="1px"
-                                        mx={2}
-                                    />
-                                )}
-                            </Step>
-                        ))}
-                    </Stepper>
-                </Box>
+                        borderRadius="full"
+                        hasStripe
+                        isAnimated
+                    />
+                </VStack>
 
-                {/* Survey Content */}
                 <AnimatePresence mode="wait">
                     <MotionBox
-                        key={step}
+                        key={stage}
                         w="full"
-                        bg={currentColors.card}
-                        borderRadius="2xl"
-                        backdropFilter="blur(20px)"
+                        p={8}
+                        bg={isLight ? "white" : "gray.700"}
+                        borderRadius="xl"
+                        boxShadow="md"
                         borderWidth="1px"
-                        borderColor={currentColors.border}
-                        boxShadow={colorMode === 'light' ? '0 4px 12px rgba(0,0,0,0.05)' : '0 4px 12px rgba(0,0,0,0.2)'}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 20
-                        }}
+                        borderColor={isLight ? "gray.200" : "gray.600"}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
                     >
-                        <Survey
-                            json={surveyJSONs[step]}
-                            showCompletedPage={false}
-                            onComplete={handleComplete}
-                        />
+                        {renderCurrentStage()}
                     </MotionBox>
                 </AnimatePresence>
 
-                {/* Navigation */}
-                {step > 0 && (
-                    <Button
-                        onClick={() => {
-                            setStep(step - 1);
-                            setActiveStep(step - 1);
-                        }}
-                        variant="ghost"
-                        color={currentColors.primary}
-                        fontWeight="500"
-                        leftIcon={<Icon as={ChevronLeft} boxSize={5} />}
-                        _hover={{ bg: colorMode === 'light' ? 'rgba(0,122,255,0.1)' : 'rgba(10,132,255,0.1)' }}
-                    >
-                        Previous
-                    </Button>
+                {stage < stages.length - 1 && (
+                    <Flex w="full" justify="space-between">
+                        <Button
+                            leftIcon={<ChevronLeft size={20} />}
+                            onClick={handleBack}
+                            isDisabled={stage === 0}
+                            variant="outline"
+                        >
+                            Back
+                        </Button>
+                        <Button
+                            rightIcon={<ChevronRight size={20} />}
+                            onClick={handleNext}
+                            colorScheme="blue"
+                            isDisabled={
+                                (stage === 0 && (!formData.name || !formData.ageGroup)) ||
+                                (stage === 2 && !audioUrl)
+                            }
+                        >
+                            {stage === stages.length - 2 ? "Submit" : "Next"}
+                        </Button>
+                    </Flex>
                 )}
             </VStack>
         </Flex>

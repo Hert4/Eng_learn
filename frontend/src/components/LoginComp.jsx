@@ -119,7 +119,7 @@ const LoginComp = () => {
                             <Icon as={FaUserShield} color="blue.400" boxSize={6} />
                         </Flex>
                         <Heading fontSize={'2xl'} mb={1}>
-                            Welcome back 👋
+                            Welcome back
                         </Heading>
                         <Text color={useColorModeValue('gray.600', 'gray.400')} fontSize="sm">
                             Sign in to continue to your account

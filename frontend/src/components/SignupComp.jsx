@@ -111,7 +111,7 @@ const SignupComp = () => {
                             <Icon as={FaUser} color="blue.400" boxSize={6} />
                         </Flex>
                         <Heading fontSize={'2xl'} mb={1}>
-                            Create an account 🎉
+                            Create an account
                         </Heading>
                         <Text color={useColorModeValue('gray.600', 'gray.400')} fontSize="sm">
                             Sign up to get started

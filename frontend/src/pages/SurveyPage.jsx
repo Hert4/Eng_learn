@@ -19,12 +19,11 @@ import {
     FormControl,
     FormLabel,
     Textarea,
-    Avatar,
+    Tooltip,
     HStack,
-    Tooltip
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Check, ChevronLeft, ChevronRight, Upload, Volume2 } from "lucide-react";
+import { Mic, Check, ChevronLeft, ChevronRight, Volume2 } from "lucide-react";
 import WaveSurfer from "wavesurfer.js";
 
 const MotionBox = motion(Box);
@@ -34,7 +33,7 @@ const stages = [
     { title: "Language Background", progress: 40 },
     { title: "Microphone Setup", progress: 60 },
     { title: "Speaking Test", progress: 80 },
-    { title: "Completion", progress: 100 }
+    { title: "Completion", progress: 100 },
 ];
 
 const questions = {
@@ -43,7 +42,7 @@ const questions = {
             id: "name",
             label: "What's your name?",
             type: "text",
-            placeholder: "Enter your full name"
+            placeholder: "Enter your full name",
         },
         {
             id: "ageGroup",
@@ -53,9 +52,9 @@ const questions = {
                 { value: "under18", label: "Under 18" },
                 { value: "18to35", label: "18-35" },
                 { value: "36to60", label: "36-60" },
-                { value: "60plus", label: "60+" }
-            ]
-        }
+                { value: "60plus", label: "60+" },
+            ],
+        },
     ],
     language: [
         {
@@ -65,23 +64,42 @@ const questions = {
             options: [
                 { value: "beginner", label: "Beginner" },
                 { value: "intermediate", label: "Intermediate" },
-                { value: "advanced", label: "Advanced" }
-            ]
+                { value: "advanced", label: "Advanced" },
+            ],
+        },
+        {
+            id: "supportNeeded",
+            label: "What kind of support do you need with English?",
+            type: "textarea",
+            placeholder: "e.g., grammar help, speaking practice...",
+            showIf: (formData) => formData.englishLevel === "beginner",
+        },
+        {
+            id: "certificationPrep",
+            label: "Are you preparing for any certifications?",
+            type: "radio",
+            options: [
+                { value: "ielts", label: "IELTS" },
+                { value: "toefl", label: "TOEFL" },
+                { value: "none", label: "None" },
+            ],
+            showIf: (formData) => formData.englishLevel === "advanced",
         },
         {
             id: "learningGoals",
             label: "What are your main goals for learning English?",
             type: "textarea",
-            placeholder: "e.g., Travel, Work, Study abroad..."
-        }
+            placeholder: "e.g., Travel, Work, Study abroad...",
+        },
     ],
     speakingTest: [
         {
             id: "topic",
             label: "Tell us about your favorite hobby or activity",
-            description: "You'll have 2 minutes to speak about this topic. Think about why you enjoy it, how often you do it, and any memorable experiences."
-        }
-    ]
+            description:
+                "You'll have 2 minutes to speak about this topic. Think about why you enjoy it, how often you do it, and any memorable experiences.",
+        },
+    ],
 };
 
 const SurveyPage = () => {
@@ -89,63 +107,112 @@ const SurveyPage = () => {
     const [formData, setFormData] = useState({});
     const [recording, setRecording] = useState(false);
     const [audioUrl, setAudioUrl] = useState(null);
+    const [audioBlob, setAudioBlob] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
+    const [isAudioLoaded, setIsAudioLoaded] = useState(false);
     const mediaRecorderRef = useRef(null);
-    const [audioChunks, setAudioChunks] = useState([]);
     const audioRef = useRef(null);
     const wavesurferRef = useRef(null);
     const waveformRef = useRef(null);
     const { colorMode } = useColorMode();
     const toast = useToast();
     const [micAccess, setMicAccess] = useState(false);
-
     const isLight = colorMode === "light";
+    const audioChunksRef = useRef([]);
 
     // Initialize WaveSurfer
     useEffect(() => {
-        if (waveformRef.current && !wavesurferRef.current) {
+        if (waveformRef.current && !wavesurferRef.current && audioUrl) {
+            console.log("Initializing WaveSurfer with container:", waveformRef.current);
             wavesurferRef.current = WaveSurfer.create({
                 container: waveformRef.current,
-                waveColor: isLight ? '#4299E1' : '#90CDF4',
-                progressColor: isLight ? '#3182CE' : '#63B3ED',
-                cursorColor: '#718096',
+                waveColor: isLight ? "#4299E1" : "#90CDF4",
+                progressColor: isLight ? "#3182CE" : "#63B3ED",
+                cursorColor: "#718096",
                 barWidth: 2,
                 barRadius: 3,
                 cursorWidth: 1,
                 height: 80,
                 barGap: 2,
-                responsive: true
+                responsive: true,
             });
 
-            wavesurferRef.current.on('ready', () => {
+            wavesurferRef.current.on("load", () => {
+                console.log("WaveSurfer loading audio:", audioUrl);
+            });
+
+            wavesurferRef.current.on("ready", () => {
                 setDuration(wavesurferRef.current.getDuration());
+                setIsAudioLoaded(true);
+                console.log("WaveSurfer ready, duration:", wavesurferRef.current.getDuration());
             });
 
-            wavesurferRef.current.on('audioprocess', () => {
-                setCurrentTime(wavesurferRef.current.getCurrentTime());
+            wavesurferRef.current.on("audioprocess", (time) => {
+                setCurrentTime(time);
+                console.log("WaveSurfer audioprocess, currentTime:", time);
             });
 
-            wavesurferRef.current.on('finish', () => {
+            wavesurferRef.current.on("play", () => {
+                setIsPlaying(true);
+                console.log("WaveSurfer playing");
+            });
+
+            wavesurferRef.current.on("pause", () => {
                 setIsPlaying(false);
+                console.log("WaveSurfer paused");
             });
+
+            wavesurferRef.current.on("finish", () => {
+                setIsPlaying(false);
+                console.log("WaveSurfer finished");
+            });
+
+            wavesurferRef.current.on("error", (err) => {
+                console.error("WaveSurfer error:", err);
+                setIsAudioLoaded(false);
+                toast({
+                    title: "Error",
+                    description: "Failed to load audio waveform",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
+            });
+
+            // Load audio
+            console.log("Loading audio into WaveSurfer:", audioUrl);
+            wavesurferRef.current.load(audioUrl);
         }
 
         return () => {
             if (wavesurferRef.current) {
+                console.log("Destroying WaveSurfer");
                 wavesurferRef.current.destroy();
                 wavesurferRef.current = null;
             }
         };
-    }, [isLight]);
+    }, [isLight, audioUrl]);
 
-    // Load audio when URL changes
+    // Sync audio element with WaveSurfer
     useEffect(() => {
-        if (audioUrl && wavesurferRef.current) {
-            wavesurferRef.current.load(audioUrl);
+        if (audioRef.current && wavesurferRef.current) {
+            audioRef.current.addEventListener("play", () => {
+                if (!isPlaying) {
+                    wavesurferRef.current.play();
+                }
+            });
+            audioRef.current.addEventListener("pause", () => {
+                if (isPlaying) {
+                    wavesurferRef.current.pause();
+                }
+            });
+            audioRef.current.addEventListener("timeupdate", () => {
+                setCurrentTime(audioRef.current.currentTime);
+            });
         }
-    }, [audioUrl]);
+    }, [isPlaying]);
 
     // Check microphone access
     useEffect(() => {
@@ -153,49 +220,93 @@ const SurveyPage = () => {
             try {
                 await navigator.mediaDevices.getUserMedia({ audio: true });
                 setMicAccess(true);
-            } catch (err) {
+            } catch (error) {
+                console.error("Microphone access denied:", error);
                 setMicAccess(false);
             }
         };
         checkMicAccess();
     }, []);
 
+    // Clean up blob URL
+    useEffect(() => {
+        return () => {
+            if (audioUrl) {
+                console.log("Revoking audio URL:", audioUrl);
+                URL.revokeObjectURL(audioUrl);
+            }
+        };
+    }, [audioUrl]);
+
     const handleInputChange = (field, value) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
     };
 
     const startRecording = async () => {
         try {
+            audioChunksRef.current = [];
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
-            setAudioChunks([]);
-
-            mediaRecorder.start(100); // Collect data every 100ms for smoother visualization
 
             mediaRecorder.addEventListener("dataavailable", (event) => {
                 if (event.data.size > 0) {
-                    setAudioChunks((prev) => [...prev, event.data]);
+                    audioChunksRef.current.push(event.data);
+                    console.log("Data available, chunk size:", event.data.size);
                 }
             });
 
             mediaRecorder.addEventListener("stop", () => {
-                const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                setAudioUrl(audioUrl);
-                stream.getTracks().forEach(track => track.stop());
+                console.log("Audio chunks length:", audioChunksRef.current.length);
+                if (audioChunksRef.current.length === 0) {
+                    toast({
+                        title: "Error",
+                        description: "No audio data recorded",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    stream.getTracks().forEach((track) => track.stop());
+                    return;
+                }
+                const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+                console.log("Audio blob size:", audioBlob.size);
+                if (audioBlob.size === 0) {
+                    toast({
+                        title: "Error",
+                        description: "Invalid audio data",
+                        status: "error",
+                        duration: 5000,
+                        isClosable: true,
+                    });
+                    stream.getTracks().forEach((track) => track.stop());
+                    return;
+                }
+                const url = URL.createObjectURL(audioBlob);
+                console.log("Audio URL:", url);
+                setAudioBlob(audioBlob);
+                setAudioUrl(url);
+                stream.getTracks().forEach((track) => track.stop());
             });
 
+            mediaRecorder.start(100);
             setRecording(true);
+
+            setTimeout(() => {
+                if (recording) {
+                    stopRecording();
+                }
+            }, 120000);
+
             toast({
                 title: "Recording started",
                 description: "Speak clearly into your microphone",
                 status: "info",
                 duration: 2000,
-                isClosable: true
+                isClosable: true,
             });
         } catch (err) {
             console.error("Recording error:", err);
@@ -204,28 +315,38 @@ const SurveyPage = () => {
                 description: "Please allow microphone access to continue",
                 status: "error",
                 duration: 5000,
-                isClosable: true
+                isClosable: true,
             });
         }
     };
 
     const stopRecording = () => {
-        if (mediaRecorderRef.current?.state !== "inactive") {
-            mediaRecorderRef.current?.stop();
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+            mediaRecorderRef.current.stop();
             setRecording(false);
             toast({
                 title: "Recording saved",
                 status: "success",
                 duration: 2000,
-                isClosable: true
+                isClosable: true,
             });
         }
     };
 
     const togglePlayback = () => {
-        if (wavesurferRef.current) {
+        if (wavesurferRef.current && isAudioLoaded) {
             wavesurferRef.current.playPause();
             setIsPlaying(!isPlaying);
+            console.log("Toggling WaveSurfer playback, isPlaying:", !isPlaying);
+        } else {
+            toast({
+                title: "Error",
+                description: "Audio waveform not loaded yet",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            console.log("Playback failed, isAudioLoaded:", isAudioLoaded);
         }
     };
 
@@ -244,7 +365,7 @@ const SurveyPage = () => {
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
     };
 
     const renderCurrentStage = () => {
@@ -253,11 +374,15 @@ const SurveyPage = () => {
                 return (
                     <VStack spacing={6} align="stretch">
                         {questions.personal.map((question) => (
-                            <FormControl key={question.id}>
+                            <FormControl
+                                key={question.id}
+                                borderBottom="1px"
+                                borderColor="blackAlpha.800"
+                                paddingBottom={4}
+                            >
                                 <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
                                     {question.label}
                                 </FormLabel>
-
                                 {question.type === "text" && (
                                     <Input
                                         placeholder={question.placeholder}
@@ -267,7 +392,6 @@ const SurveyPage = () => {
                                         variant="filled"
                                     />
                                 )}
-
                                 {question.type === "radio" && (
                                     <RadioGroup
                                         value={formData[question.id] || ""}
@@ -290,37 +414,38 @@ const SurveyPage = () => {
             case 1: // Language Background
                 return (
                     <VStack spacing={6} align="stretch">
-                        {questions.language.map((question) => (
-                            <FormControl key={question.id}>
-                                <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
-                                    {question.label}
-                                </FormLabel>
-
-                                {question.type === "radio" ? (
-                                    <RadioGroup
-                                        value={formData[question.id] || ""}
-                                        onChange={(value) => handleInputChange(question.id, value)}
-                                    >
-                                        <Stack direction="column" spacing={3}>
-                                            {question.options.map((option) => (
-                                                <Radio key={option.value} value={option.value} size="lg">
-                                                    {option.label}
-                                                </Radio>
-                                            ))}
-                                        </Stack>
-                                    </RadioGroup>
-                                ) : (
-                                    <Textarea
-                                        placeholder={question.placeholder}
-                                        value={formData[question.id] || ""}
-                                        onChange={(e) => handleInputChange(question.id, e.target.value)}
-                                        size="lg"
-                                        variant="filled"
-                                        minH="120px"
-                                    />
-                                )}
-                            </FormControl>
-                        ))}
+                        {questions.language
+                            .filter((q) => !q.showIf || q.showIf(formData))
+                            .map((question) => (
+                                <FormControl key={question.id}>
+                                    <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
+                                        {question.label}
+                                    </FormLabel>
+                                    {question.type === "radio" ? (
+                                        <RadioGroup
+                                            value={formData[question.id] || ""}
+                                            onChange={(value) => handleInputChange(question.id, value)}
+                                        >
+                                            <Stack direction="column" spacing={3}>
+                                                {question.options.map((option) => (
+                                                    <Radio key={option.value} value={option.value} size="lg">
+                                                        {option.label}
+                                                    </Radio>
+                                                ))}
+                                            </Stack>
+                                        </RadioGroup>
+                                    ) : (
+                                        <Textarea
+                                            placeholder={question.placeholder}
+                                            value={formData[question.id] || ""}
+                                            onChange={(e) => handleInputChange(question.id, e.target.value)}
+                                            size="lg"
+                                            variant="filled"
+                                            minH="120px"
+                                        />
+                                    )}
+                                </FormControl>
+                            ))}
                     </VStack>
                 );
 
@@ -330,9 +455,11 @@ const SurveyPage = () => {
                         <Text fontSize="xl" textAlign="center" fontWeight="semibold">
                             Let's check your microphone setup
                         </Text>
-
                         <Box textAlign="center">
-                            <Tooltip label={micAccess ? "Microphone ready" : "Microphone access required"} placement="top">
+                            <Tooltip
+                                label={micAccess ? "Microphone ready" : "Microphone access required"}
+                                placement="top"
+                            >
                                 <IconButton
                                     aria-label="Record Mic"
                                     icon={<Mic size={32} />}
@@ -346,16 +473,23 @@ const SurveyPage = () => {
                                     animation={recording ? "pulse 1.5s infinite" : "none"}
                                 />
                             </Tooltip>
-                            <Text color={recording ? "green.500" : "gray.500"} fontWeight="medium">
-                                {recording ? "Recording..." : micAccess ? "Click to record" : "Microphone not available"}
+                            <Text
+                                color={recording ? "green.500" : "gray.500"}
+                                fontWeight="medium"
+                            >
+                                {recording
+                                    ? "Recording..."
+                                    : micAccess
+                                        ? "Click to record"
+                                        : "Microphone not available"}
                             </Text>
                         </Box>
-
                         {audioUrl && (
                             <Card w="full" variant="outline">
                                 <CardBody>
                                     <VStack spacing={4}>
-                                        <Box ref={waveformRef} w="full" />
+                                        <Box ref={waveformRef} w="full" minH="80px" />
+                                        <audio ref={audioRef} src={audioUrl} />
                                         <HStack w="full" justify="space-between">
                                             <Text fontSize="sm" color="gray.500">
                                                 {formatTime(currentTime)} / {formatTime(duration)}
@@ -365,6 +499,7 @@ const SurveyPage = () => {
                                                 onClick={togglePlayback}
                                                 size="sm"
                                                 variant="ghost"
+                                                isDisabled={!isAudioLoaded}
                                             >
                                                 {isPlaying ? "Pause" : "Play"}
                                             </Button>
@@ -373,10 +508,8 @@ const SurveyPage = () => {
                                 </CardBody>
                             </Card>
                         )}
-
                         <Text fontSize="sm" color="gray.500" textAlign="center">
-                            Record a short test to ensure your microphone is working properly.
-                            Speak a few sentences and play it back to verify the quality.
+                            Nói thử xem nào !!!
                         </Text>
                     </VStack>
                 );
@@ -392,7 +525,6 @@ const SurveyPage = () => {
                                 <Text color="gray.500" mb={6}>
                                     {question.description}
                                 </Text>
-
                                 <VStack spacing={6}>
                                     {!recording ? (
                                         <Button
@@ -415,21 +547,25 @@ const SurveyPage = () => {
                                             Stop Recording (2:00 max)
                                         </Button>
                                     )}
-
                                     {audioUrl && (
                                         <Card w="full" variant="outline">
                                             <CardBody>
                                                 <VStack spacing={4}>
-                                                    <Box ref={waveformRef} w="full" />
+                                                    <Box ref={waveformRef} w="full" minH="80px" />
+                                                    <audio ref={audioRef} src={audioUrl} />
                                                     <HStack w="full" justify="space-between">
                                                         <Text fontSize="sm" color="gray.500">
-                                                            {formatTime(currentTime)} / {formatTime(duration)}
+                                                            {formatTime(currentTime)} /{" "}
+                                                            {formatTime(duration)}
                                                         </Text>
                                                         <Button
-                                                            leftIcon={isPlaying ? <Volume2 /> : <Volume2 />}
+                                                            leftIcon={
+                                                                isPlaying ? <Volume2 /> : <Volume2 />
+                                                            }
                                                             onClick={togglePlayback}
                                                             size="sm"
                                                             variant="ghost"
+                                                            isDisabled={!isAudioLoaded}
                                                         >
                                                             {isPlaying ? "Pause" : "Play"}
                                                         </Button>
@@ -438,9 +574,9 @@ const SurveyPage = () => {
                                             </CardBody>
                                         </Card>
                                     )}
-
                                     <Text fontSize="sm" color="gray.500">
-                                        You can record multiple times until you're satisfied with your response.
+                                        You can record multiple times until you're satisfied with
+                                        your response.
                                     </Text>
                                 </VStack>
                             </Box>
@@ -451,16 +587,11 @@ const SurveyPage = () => {
             case 4: // Completion
                 return (
                     <VStack spacing={8} textAlign="center" py={8}>
-                        <Box
-                            as={Check}
-                            size={80}
-                            color="#38A169"
-                            strokeWidth={2}
-                            mx="auto"
-                        />
+                        <Box as={Check} size={80} color="#38A169" strokeWidth={2} mx="auto" />
                         <Heading size="lg">Test Submitted Successfully!</Heading>
                         <Text fontSize="lg" color="gray.500">
-                            Thank you for completing the OPIC exercise test. Your results will be reviewed shortly.
+                            Thank you for completing the OPIC exercise test. Your results will
+                            be reviewed shortly.
                         </Text>
                         <Button
                             colorScheme="blue"
@@ -470,6 +601,8 @@ const SurveyPage = () => {
                                 setStage(0);
                                 setFormData({});
                                 setAudioUrl(null);
+                                setAudioBlob(null);
+                                setIsAudioLoaded(false);
                             }}
                         >
                             Start New Test
@@ -499,9 +632,7 @@ const SurveyPage = () => {
                     >
                         OPIC Speaking Assessment
                     </Heading>
-                    <Text color="gray.500">
-                        {stages[stage].title}
-                    </Text>
+                    <Text color="gray.500">{stages[stage].title}</Text>
                     <Progress
                         value={stages[stage].progress}
                         size="sm"

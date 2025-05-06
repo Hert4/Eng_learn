@@ -1,80 +1,50 @@
-language: [
-    {
-        id: "englishLevel",
-        label: "How would you describe your English proficiency?",
-        type: "radio",
-        options: [
-            { value: "beginner", label: "Beginner" },
-            { value: "intermediate", label: "Intermediate" },
-            { value: "advanced", label: "Advanced" }
-        ]
-    },
-    {
-        id: "supportNeeded",
-        label: "What kind of support do you need with English?",
-        type: "textarea",
-        placeholder: "e.g., grammar help, speaking practice...",
-        showIf: (formData) => formData.englishLevel === "beginner"
-    },
-    {
-        id: "certificationPrep",
-        label: "Are you preparing for any certifications?",
-        type: "radio",
-        options: [
-            { value: "ielts", label: "IELTS" },
-            { value: "toefl", label: "TOEFL" },
-            { value: "none", label: "None" }
-        ],
-        showIf: (formData) => formData.englishLevel === "advanced"
-    },
-    {
-        id: "learningGoals",
-        label: "What are your main goals for learning English?",
-        type: "textarea",
-        placeholder: "e.g., Travel, Work, Study abroad..."
+Vấn đề bạn mô tả là: khi ghi âm xong thì không thấy waveform hiển thị, không play được, thời gian ghi là 0, nhưng khi sửa một dòng trong code rồi Ctrl + Z và lưu lại thì mọi thứ lại hoạt động.
+
+Điều này thường là do WaveSurfer không nhận được Blob audio đúng lúc hoặc không được trigger lại để load sau khi ghi âm.
+
+Nguyên nhân có thể:
+
+Trong hàm stopRecording, bạn tạo một Blob từ audioChunks ngay khi sự kiện "stop" được gọi, nhưng audioChunks được cập nhật qua setAudioChunks() vốn là bất đồng bộ (asynchronous) trong React. Do đó, vào thời điểm stop chạy, audioChunks chưa chứa đủ dữ liệu (hoặc là rỗng).
+
+Cách sửa:
+
+Thay vì rely vào state audioChunks, hãy lưu trữ chúng trong một biến tham chiếu (useRef), để đảm bảo bạn có tất cả dữ liệu ngay lúc stop:
+
+1. Thêm audioChunksRef:
+
+const audioChunksRef = useRef([]);
+
+2. Trong startRecording, reset audioChunksRef:
+
+audioChunksRef.current = [];
+
+3. Trong dataavailable, push trực tiếp:
+
+mediaRecorder.addEventListener("dataavailable", (event) => {
+    if (event.data.size > 0) {
+        audioChunksRef.current.push(event.data);
     }
-case 1: // Language Background
-    return (
-        <VStack spacing={6} align="stretch">
-            {questions.language
-                .filter(q => !q.showIf || q.showIf(formData))
-                .map((question) => (
-                    <FormControl key={question.id}>
-                        <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
-                            {question.label}
-                        </FormLabel>
+});
 
-                        {question.type === "radio" ? (
-                            <RadioGroup
-                                value={formData[question.id] || ""}
-                                onChange={(value) => handleInputChange(question.id, value)}
-                            >
-                                <Stack direction="column" spacing={3}>
-                                    {question.options.map((option) => (
-                                        <Radio key={option.value} value={option.value} size="lg">
-                                            {option.label}
-                                        </Radio>
-                                    ))}
-                                </Stack>
-                            </RadioGroup>
-                        ) : (
-                            <Textarea
-                                placeholder={question.placeholder}
-                                value={formData[question.id] || ""}
-                                onChange={(e) => handleInputChange(question.id, e.target.value)}
-                                size="lg"
-                                variant="filled"
-                                minH="120px"
-                            />
-                        )}
-                    </FormControl>
-                ))}
-        </VStack>
-    );
+4. Trong stop, dùng audioChunksRef.current:
+
+mediaRecorder.addEventListener("stop", () => {
+    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+    const url = URL.createObjectURL(audioBlob);
+    setAudioUrl(url);
+    stream.getTracks().forEach(track => track.stop());
+});
 
 
 
+⸻
 
+Tóm lại:
+	•	Tránh dùng setState để lưu audioChunks vì nó không cập nhật kịp lúc khi bạn cần.
+	•	Dùng useRef để có quyền truy cập tức thời vào mảng dữ liệu âm thanh.
+	•	Sau đó, audioUrl thay đổi sẽ trigger wavesurfer.load(audioUrl) đúng lúc và waveform sẽ hiển thị.
+
+Bạn có muốn mình sửa trực tiếp đoạn mã đó cho bạn luôn không?
 
 
 

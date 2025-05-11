@@ -12,17 +12,19 @@ function FloatingLogo() {
     return (
         <Box
             ref={logoRef}
-            position="fixed"
-            bottom="4"
-            right="4"
-            zIndex="overlay"
+            // position="fixed"
+            // bottom="4"
+            // right="4"
+            // zIndex="overlay"
             cursor="grab"
         >
             <Image
                 src={reactLogo}
-                alt="Messenger logo"
+                alt="GPT logo"
                 className="logo react"
-                boxSize="60px"
+
+                boxSize={{ base: '90px', sm: '20px' }}
+            // boxSize="60px"
             />
         </Box>
     );

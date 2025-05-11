@@ -60,8 +60,8 @@ const Header = ({ user }) => {
     const navItems = [
         { label: 'Home', href: '/' },
         { label: 'Exercise', href: '/exercise' },
-        { label: 'Test', href: '#test' },
-        { label: 'FAQ', href: '#faq' },
+        { label: 'Test', href: '/test' },
+        { label: 'FAQ', href: '/faq' },
     ];
 
     const handleOpenLinks = () => {

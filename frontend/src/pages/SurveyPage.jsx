@@ -5,26 +5,18 @@ import {
     VStack,
     Heading,
     Text,
-    Input,
-    RadioGroup,
-    Radio,
-    Stack,
-    useColorMode,
     Flex,
-    useToast,
-    IconButton,
     Progress,
-    Card,
-    CardBody,
-    FormControl,
-    FormLabel,
-    Textarea,
-    Tooltip,
-    HStack,
+    useColorMode,
+    useToast,
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Check, ChevronLeft, ChevronRight, Volume2 } from "lucide-react";
-import WaveSurfer from "wavesurfer.js";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import PersonalInfoForm from "../components/PersionalInfoForm";
+import LanguageBackgroundForm from "../components/LanguageBackgroundForm";
+import MicrophoneSetup from "../components/MicrophoneSetup";
+import SpeakingTest from "../components/SpeakingTest";
+import CompletionScreen from "../components/ComplementScreen";
 
 const MotionBox = motion(Box);
 
@@ -36,183 +28,18 @@ const stages = [
     { title: "Completion", progress: 100 },
 ];
 
-const questions = {
-    personal: [
-        {
-            id: "name",
-            label: "What's your name?",
-            type: "text",
-            placeholder: "Enter your full name",
-        },
-        {
-            id: "ageGroup",
-            label: "Which age group do you belong to?",
-            type: "radio",
-            options: [
-                { value: "under18", label: "Under 18" },
-                { value: "18to35", label: "18-35" },
-                { value: "36to60", label: "36-60" },
-                { value: "60plus", label: "60+" },
-            ],
-        },
-    ],
-    language: [
-        {
-            id: "englishLevel",
-            label: "How would you describe your English proficiency?",
-            type: "radio",
-            options: [
-                { value: "beginner", label: "Beginner" },
-                { value: "intermediate", label: "Intermediate" },
-                { value: "advanced", label: "Advanced" },
-            ],
-        },
-        {
-            id: "supportNeeded",
-            label: "What kind of support do you need with English?",
-            type: "textarea",
-            placeholder: "e.g., grammar help, speaking practice...",
-            showIf: (formData) => formData.englishLevel === "beginner",
-        },
-        {
-            id: "certificationPrep",
-            label: "Are you preparing for any certifications?",
-            type: "radio",
-            options: [
-                { value: "ielts", label: "IELTS" },
-                { value: "toefl", label: "TOEFL" },
-                { value: "none", label: "None" },
-            ],
-            showIf: (formData) => formData.englishLevel === "advanced",
-        },
-        {
-            id: "learningGoals",
-            label: "What are your main goals for learning English?",
-            type: "textarea",
-            placeholder: "e.g., Travel, Work, Study abroad...",
-        },
-    ],
-    speakingTest: [
-        {
-            id: "topic",
-            label: "Tell us about your favorite hobby or activity",
-            description:
-                "You'll have 2 minutes to speak about this topic. Think about why you enjoy it, how often you do it, and any memorable experiences.",
-        },
-    ],
-};
-
 const SurveyPage = () => {
     const [stage, setStage] = useState(0);
     const [formData, setFormData] = useState({});
     const [recording, setRecording] = useState(false);
-    const [audioUrl, setAudioUrl] = useState(null);
-    const [audioBlob, setAudioBlob] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [duration, setDuration] = useState(0);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [isAudioLoaded, setIsAudioLoaded] = useState(false);
+    const [micSetupAudioUrl, setMicSetupAudioUrl] = useState(null);
+    const [speakingTestAudioUrl, setSpeakingTestAudioUrl] = useState(null);
+    const [micAccess, setMicAccess] = useState(false);
     const mediaRecorderRef = useRef(null);
-    const audioRef = useRef(null);
-    const wavesurferRef = useRef(null);
-    const waveformRef = useRef(null);
+    const audioChunksRef = useRef([]);
     const { colorMode } = useColorMode();
     const toast = useToast();
-    const [micAccess, setMicAccess] = useState(false);
     const isLight = colorMode === "light";
-    const audioChunksRef = useRef([]);
-
-    // Initialize WaveSurfer
-    useEffect(() => {
-        if (waveformRef.current && !wavesurferRef.current && audioUrl) {
-            console.log("Initializing WaveSurfer with container:", waveformRef.current);
-            wavesurferRef.current = WaveSurfer.create({
-                container: waveformRef.current,
-                waveColor: isLight ? "#4299E1" : "#90CDF4",
-                progressColor: isLight ? "#3182CE" : "#63B3ED",
-                cursorColor: "#718096",
-                barWidth: 2,
-                barRadius: 3,
-                cursorWidth: 1,
-                height: 80,
-                barGap: 2,
-                responsive: true,
-            });
-
-            wavesurferRef.current.on("load", () => {
-                console.log("WaveSurfer loading audio:", audioUrl);
-            });
-
-            wavesurferRef.current.on("ready", () => {
-                setDuration(wavesurferRef.current.getDuration());
-                setIsAudioLoaded(true);
-                console.log("WaveSurfer ready, duration:", wavesurferRef.current.getDuration());
-            });
-
-            wavesurferRef.current.on("audioprocess", (time) => {
-                setCurrentTime(time);
-                console.log("WaveSurfer audioprocess, currentTime:", time);
-            });
-
-            wavesurferRef.current.on("play", () => {
-                setIsPlaying(true);
-                console.log("WaveSurfer playing");
-            });
-
-            wavesurferRef.current.on("pause", () => {
-                setIsPlaying(false);
-                console.log("WaveSurfer paused");
-            });
-
-            wavesurferRef.current.on("finish", () => {
-                setIsPlaying(false);
-                console.log("WaveSurfer finished");
-            });
-
-            wavesurferRef.current.on("error", (err) => {
-                console.error("WaveSurfer error:", err);
-                setIsAudioLoaded(false);
-                toast({
-                    title: "Error",
-                    description: "Failed to load audio waveform",
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                });
-            });
-
-            // Load audio
-            console.log("Loading audio into WaveSurfer:", audioUrl);
-            wavesurferRef.current.load(audioUrl);
-        }
-
-        return () => {
-            if (wavesurferRef.current) {
-                console.log("Destroying WaveSurfer");
-                wavesurferRef.current.destroy();
-                wavesurferRef.current = null;
-            }
-        };
-    }, [isLight, audioUrl]);
-
-    // Sync audio element with WaveSurfer
-    useEffect(() => {
-        if (audioRef.current && wavesurferRef.current) {
-            audioRef.current.addEventListener("play", () => {
-                if (!isPlaying) {
-                    wavesurferRef.current.play();
-                }
-            });
-            audioRef.current.addEventListener("pause", () => {
-                if (isPlaying) {
-                    wavesurferRef.current.pause();
-                }
-            });
-            audioRef.current.addEventListener("timeupdate", () => {
-                setCurrentTime(audioRef.current.currentTime);
-            });
-        }
-    }, [isPlaying]);
 
     // Check microphone access
     useEffect(() => {
@@ -228,15 +55,19 @@ const SurveyPage = () => {
         checkMicAccess();
     }, []);
 
-    // Clean up blob URL
+    // Clean up blob URLs
     useEffect(() => {
         return () => {
-            if (audioUrl) {
-                console.log("Revoking audio URL:", audioUrl);
-                URL.revokeObjectURL(audioUrl);
+            if (micSetupAudioUrl) {
+                console.log("Revoking micSetupAudioUrl:", micSetupAudioUrl);
+                URL.revokeObjectURL(micSetupAudioUrl);
+            }
+            if (speakingTestAudioUrl) {
+                console.log("Revoking speakingTestAudioUrl:", speakingTestAudioUrl);
+                URL.revokeObjectURL(speakingTestAudioUrl);
             }
         };
-    }, [audioUrl]);
+    }, [micSetupAudioUrl, speakingTestAudioUrl]);
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({
@@ -245,7 +76,7 @@ const SurveyPage = () => {
         }));
     };
 
-    const startRecording = async () => {
+    const startRecording = async (stageIndex) => {
         try {
             audioChunksRef.current = [];
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -274,10 +105,10 @@ const SurveyPage = () => {
                 }
                 const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
                 console.log("Audio blob size:", audioBlob.size);
-                if (audioBlob.size === 0) {
+                if (audioBlob.size < 100) {
                     toast({
                         title: "Error",
-                        description: "Invalid audio data",
+                        description: "Recorded audio is too short or invalid",
                         status: "error",
                         duration: 5000,
                         isClosable: true,
@@ -287,9 +118,19 @@ const SurveyPage = () => {
                 }
                 const url = URL.createObjectURL(audioBlob);
                 console.log("Audio URL:", url);
-                setAudioBlob(audioBlob);
-                setAudioUrl(url);
+                if (stageIndex === 2) {
+                    setMicSetupAudioUrl(url);
+                } else if (stageIndex === 3) {
+                    setSpeakingTestAudioUrl(url);
+                }
                 stream.getTracks().forEach((track) => track.stop());
+                toast({
+                    title: "Recording saved",
+                    description: "Your audio has been successfully saved.",
+                    status: "success",
+                    duration: 2000,
+                    isClosable: true,
+                });
             });
 
             mediaRecorder.start(100);
@@ -324,29 +165,17 @@ const SurveyPage = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
             mediaRecorderRef.current.stop();
             setRecording(false);
-            toast({
-                title: "Recording saved",
-                status: "success",
-                duration: 2000,
-                isClosable: true,
-            });
         }
     };
 
-    const togglePlayback = () => {
-        if (wavesurferRef.current && isAudioLoaded) {
-            wavesurferRef.current.playPause();
-            setIsPlaying(!isPlaying);
-            console.log("Toggling WaveSurfer playback, isPlaying:", !isPlaying);
-        } else {
-            toast({
-                title: "Error",
-                description: "Audio waveform not loaded yet",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-            console.log("Playback failed, isAudioLoaded:", isAudioLoaded);
+    const downloadAudio = () => {
+        if (speakingTestAudioUrl) {
+            const link = document.createElement("a");
+            link.href = speakingTestAudioUrl;
+            link.download = "speaking_test_audio.webm";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     };
 
@@ -362,254 +191,42 @@ const SurveyPage = () => {
         }
     };
 
-    const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    const resetSurvey = () => {
+        setStage(0);
+        setFormData({});
+        setMicSetupAudioUrl(null);
+        setSpeakingTestAudioUrl(null);
+        setRecording(false);
     };
 
     const renderCurrentStage = () => {
         switch (stage) {
-            case 0: // Personal Information
+            case 0:
+                return <PersonalInfoForm formData={formData} handleInputChange={handleInputChange} />;
+            case 1:
+                return <LanguageBackgroundForm formData={formData} handleInputChange={handleInputChange} />;
+            case 2:
                 return (
-                    <VStack spacing={6} align="stretch">
-                        {questions.personal.map((question) => (
-                            <FormControl
-                                key={question.id}
-                                borderBottom="1px"
-                                borderColor="blackAlpha.800"
-                                paddingBottom={4}
-                            >
-                                <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
-                                    {question.label}
-                                </FormLabel>
-                                {question.type === "text" && (
-                                    <Input
-                                        placeholder={question.placeholder}
-                                        value={formData[question.id] || ""}
-                                        onChange={(e) => handleInputChange(question.id, e.target.value)}
-                                        size="lg"
-                                        variant="filled"
-                                    />
-                                )}
-                                {question.type === "radio" && (
-                                    <RadioGroup
-                                        value={formData[question.id] || ""}
-                                        onChange={(value) => handleInputChange(question.id, value)}
-                                    >
-                                        <Stack direction="column" spacing={3}>
-                                            {question.options.map((option) => (
-                                                <Radio key={option.value} value={option.value} size="lg">
-                                                    {option.label}
-                                                </Radio>
-                                            ))}
-                                        </Stack>
-                                    </RadioGroup>
-                                )}
-                            </FormControl>
-                        ))}
-                    </VStack>
+                    <MicrophoneSetup
+                        recording={recording}
+                        startRecording={() => startRecording(2)}
+                        stopRecording={stopRecording}
+                        audioUrl={micSetupAudioUrl}
+                        micAccess={micAccess}
+                    />
                 );
-
-            case 1: // Language Background
+            case 3:
                 return (
-                    <VStack spacing={6} align="stretch">
-                        {questions.language
-                            .filter((q) => !q.showIf || q.showIf(formData))
-                            .map((question) => (
-                                <FormControl key={question.id}>
-                                    <FormLabel fontSize="lg" fontWeight="semibold" mb={3}>
-                                        {question.label}
-                                    </FormLabel>
-                                    {question.type === "radio" ? (
-                                        <RadioGroup
-                                            value={formData[question.id] || ""}
-                                            onChange={(value) => handleInputChange(question.id, value)}
-                                        >
-                                            <Stack direction="column" spacing={3}>
-                                                {question.options.map((option) => (
-                                                    <Radio key={option.value} value={option.value} size="lg">
-                                                        {option.label}
-                                                    </Radio>
-                                                ))}
-                                            </Stack>
-                                        </RadioGroup>
-                                    ) : (
-                                        <Textarea
-                                            placeholder={question.placeholder}
-                                            value={formData[question.id] || ""}
-                                            onChange={(e) => handleInputChange(question.id, e.target.value)}
-                                            size="lg"
-                                            variant="filled"
-                                            minH="120px"
-                                        />
-                                    )}
-                                </FormControl>
-                            ))}
-                    </VStack>
+                    <SpeakingTest
+                        recording={recording}
+                        startRecording={() => startRecording(3)}
+                        stopRecording={stopRecording}
+                        audioUrl={speakingTestAudioUrl}
+                        downloadAudio={downloadAudio}
+                    />
                 );
-
-            case 2: // Microphone Setup
-                return (
-                    <VStack spacing={8} align="center">
-                        <Text fontSize="xl" textAlign="center" fontWeight="semibold">
-                            Let's check your microphone setup
-                        </Text>
-                        <Box textAlign="center">
-                            <Tooltip
-                                label={micAccess ? "Microphone ready" : "Microphone access required"}
-                                placement="top"
-                            >
-                                <IconButton
-                                    aria-label="Record Mic"
-                                    icon={<Mic size={32} />}
-                                    onClick={recording ? stopRecording : startRecording}
-                                    colorScheme={recording ? "red" : "blue"}
-                                    isRound
-                                    size="lg"
-                                    w="80px"
-                                    h="80px"
-                                    mb={4}
-                                    animation={recording ? "pulse 1.5s infinite" : "none"}
-                                />
-                            </Tooltip>
-                            <Text
-                                color={recording ? "green.500" : "gray.500"}
-                                fontWeight="medium"
-                            >
-                                {recording
-                                    ? "Recording..."
-                                    : micAccess
-                                        ? "Click to record"
-                                        : "Microphone not available"}
-                            </Text>
-                        </Box>
-                        {audioUrl && (
-                            <Card w="full" variant="outline">
-                                <CardBody>
-                                    <VStack spacing={4}>
-                                        <Box ref={waveformRef} w="full" minH="80px" />
-                                        <audio ref={audioRef} src={audioUrl} />
-                                        <HStack w="full" justify="space-between">
-                                            <Text fontSize="sm" color="gray.500">
-                                                {formatTime(currentTime)} / {formatTime(duration)}
-                                            </Text>
-                                            <Button
-                                                leftIcon={isPlaying ? <Volume2 /> : <Volume2 />}
-                                                onClick={togglePlayback}
-                                                size="sm"
-                                                variant="ghost"
-                                                isDisabled={!isAudioLoaded}
-                                            >
-                                                {isPlaying ? "Pause" : "Play"}
-                                            </Button>
-                                        </HStack>
-                                    </VStack>
-                                </CardBody>
-                            </Card>
-                        )}
-                        <Text fontSize="sm" color="gray.500" textAlign="center">
-                            Nói thử xem nào !!!
-                        </Text>
-                    </VStack>
-                );
-
-            case 3: // Speaking Test
-                return (
-                    <VStack spacing={8} align="stretch">
-                        {questions.speakingTest.map((question) => (
-                            <Box key={question.id}>
-                                <Text fontSize="xl" fontWeight="semibold" mb={2}>
-                                    {question.label}
-                                </Text>
-                                <Text color="gray.500" mb={6}>
-                                    {question.description}
-                                </Text>
-                                <VStack spacing={6}>
-                                    {!recording ? (
-                                        <Button
-                                            colorScheme="blue"
-                                            leftIcon={<Mic />}
-                                            onClick={startRecording}
-                                            size="lg"
-                                            w="full"
-                                        >
-                                            Start Recording
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            colorScheme="red"
-                                            leftIcon={<Mic />}
-                                            onClick={stopRecording}
-                                            size="lg"
-                                            w="full"
-                                        >
-                                            Stop Recording (2:00 max)
-                                        </Button>
-                                    )}
-                                    {audioUrl && (
-                                        <Card w="full" variant="outline">
-                                            <CardBody>
-                                                <VStack spacing={4}>
-                                                    <Box ref={waveformRef} w="full" minH="80px" />
-                                                    <audio ref={audioRef} src={audioUrl} />
-                                                    <HStack w="full" justify="space-between">
-                                                        <Text fontSize="sm" color="gray.500">
-                                                            {formatTime(currentTime)} /{" "}
-                                                            {formatTime(duration)}
-                                                        </Text>
-                                                        <Button
-                                                            leftIcon={
-                                                                isPlaying ? <Volume2 /> : <Volume2 />
-                                                            }
-                                                            onClick={togglePlayback}
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            isDisabled={!isAudioLoaded}
-                                                        >
-                                                            {isPlaying ? "Pause" : "Play"}
-                                                        </Button>
-                                                    </HStack>
-                                                </VStack>
-                                            </CardBody>
-                                        </Card>
-                                    )}
-                                    <Text fontSize="sm" color="gray.500">
-                                        You can record multiple times until you're satisfied with
-                                        your response.
-                                    </Text>
-                                </VStack>
-                            </Box>
-                        ))}
-                    </VStack>
-                );
-
-            case 4: // Completion
-                return (
-                    <VStack spacing={8} textAlign="center" py={8}>
-                        <Box as={Check} size={80} color="#38A169" strokeWidth={2} mx="auto" />
-                        <Heading size="lg">Test Submitted Successfully!</Heading>
-                        <Text fontSize="lg" color="gray.500">
-                            Thank you for completing the OPIC exercise test. Your results will
-                            be reviewed shortly.
-                        </Text>
-                        <Button
-                            colorScheme="blue"
-                            size="lg"
-                            mt={6}
-                            onClick={() => {
-                                setStage(0);
-                                setFormData({});
-                                setAudioUrl(null);
-                                setAudioBlob(null);
-                                setIsAudioLoaded(false);
-                            }}
-                        >
-                            Start New Test
-                        </Button>
-                    </VStack>
-                );
-
+            case 4:
+                return <CompletionScreen resetSurvey={resetSurvey} />;
             default:
                 return null;
         }
@@ -679,7 +296,14 @@ const SurveyPage = () => {
                             colorScheme="blue"
                             isDisabled={
                                 (stage === 0 && (!formData.name || !formData.ageGroup)) ||
-                                (stage === 2 && !audioUrl)
+                                (stage === 1 &&
+                                    (!formData.englishLevel ||
+                                        (formData.englishLevel === "beginner" &&
+                                            !formData.supportNeeded) ||
+                                        (formData.englishLevel === "advanced" &&
+                                            !formData.certificationPrep))) ||
+                                (stage === 2 && !micSetupAudioUrl) ||
+                                (stage === 3 && !speakingTestAudioUrl)
                             }
                         >
                             {stage === stages.length - 2 ? "Submit" : "Next"}

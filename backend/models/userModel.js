@@ -22,8 +22,12 @@ const userSchema = mongoose.Schema({
     profilePic: {
         type: String,
         default: ""
-    }
+    },
 
+    exams: {
+        type: Object,
+        default: {}
+    }
 }, {timestamps: true})
 
 const User = mongoose.model('User', userSchema)

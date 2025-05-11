@@ -1,25 +1,39 @@
 import {
     Box,
     Button,
+    Container,
     Flex,
-    Grid,
-    GridItem,
     Heading,
     Image,
     Text,
-    useColorMode
+    useColorMode,
+    Grid,
+    GridItem,
+    Card,
+    Divider,
+    CardBody,
+    CardFooter,
+    ButtonGroup,
+    CardHeader,
+    Avatar,
+    Img,
+    IconButton,
+    useColorModeValue,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+// import { GitHubIcon, XIcon, LinkedInIcon } from "@chakra-ui/icons";
 
 const MotionButton = motion(Button);
+
 
 
 const FadeInSection = ({ children, animation = 'fade-in', delay = 0 }) => {
     const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true });
     const [isVisible, setIsVisible] = useState(false);
+
 
     useEffect(() => {
         // Delay the visibility check to ensure IntersectionObserver initializes
@@ -104,23 +118,76 @@ const Page = () => {
                                 </Flex>
                             </FadeInSection>
                         </Grid>
+
                     </Box>
+
+                    <Flex
+
+                        zIndex={'100'}
+                        right={20}
+                        w={'750px'}
+                        top={15}
+                        h={'500px'}
+                        pos="absolute"
+                        gap={2}
+
+                    >
+                        <Card
+                            position="absolute"
+                            right={20}
+                            top={14}
+                            w="80"
+                            flex="flex-col"
+                            justifyContent="center"
+                            alignItems="center"
+                            dropShadow="xl"
+                            shadow="black/10 dark:shadow-white/10"
+                            justify='center'
+
+                        >
+                            <CardHeader mt={8}>
+                                <Img
+                                    src="https://i.pravatar.cc/150?img=58"
+                                    alt="user avatar"
+                                    position="absolute"
+                                    top="-12"
+                                    rounded="full"
+                                    w="24"
+                                    h="24"
+                                    objectFit="cover"
+                                    right={15}
+                                />
+                                <Heading textAlign="center">Nguyen Khanh</Heading>
+                                <Text fontWeight="normal" color="primary">
+                                    {/* Add description here */}
+                                </Text>
+                            </CardHeader>
+                            <CardBody textAlign="center" pb={2}>
+                                <Text>
+                                    I really enjoy transforming ideas into functional software that
+                                    exceeds expectations
+                                </Text>
+                            </CardBody>
+                            {/* <CardFooter>
+                                <Box display="flex" justifyContent="space-around">
+                                    <Link href="" isExternal rel="noreferrer noopener" _hover={{ color: 'gray.500' }}>
+                                        <IconButton icon={<GitHubIcon />} aria-label="Github icon" size="sm" />
+                                    </Link>
+                                    <Link href="" isExternal rel="noreferrer noopener" _hover={{ color: 'gray.500' }}>
+                                        <IconButton icon={<XIcon />} aria-label="X icon" size="sm" />
+                                    </Link>
+                                    <Link href="" isExternal rel="noreferrer noopener" _hover={{ color: 'gray.500' }}>
+                                        <IconButton icon={<LinkedInIcon />} aria-label="Linkedin icon" size="sm" />
+                                    </Link>
+                                </Box>
+                            </CardFooter> */}
+                        </Card>
+
+
+                    </Flex>
                 </Box>
 
             </Box >
-            {/* Added more component here ... */}
-
-            <Box as="section" py={12} bg="gray.50">
-                <Box maxW="7xl" mx="auto" px={6}>
-                    <Text textAlign="center" color="gray.500" fontSize="sm" mb={8}>TRUSTED BY INNOVATIVE TEAMS WORLDWIDE</Text>
-                    <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }} gap={8} alignItems="center" justifyItems="center">
-                        <Image src="https://logo.clearbit.com/google.com" alt="Google" h={8} opacity={0.6} _hover={{ opacity: 1 }} transition="opacity 0.3s" />
-                        <Image src="https://logo.clearbit.com/microsoft.com" alt="Microsoft" h={8} opacity={0.6} _hover={{ opacity: 1 }} transition="opacity 0.3s" />
-                        <Image src="https://logo.clearbit.com/airbnb.com" alt="Airbnb" h={8} opacity={0.6} _hover={{ opacity: 1 }} transition="opacity 0.3s" />
-                        <Image src="https://logo.clearbit.com/spotify.com" alt="Spotify" h={8} opacity={0.6} _hover={{ opacity: 1 }} transition="opacity 0.3s" />
-                    </Grid>
-                </Box>
-            </Box>
         </>
     )
 }

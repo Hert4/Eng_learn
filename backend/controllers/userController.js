@@ -7,10 +7,24 @@ import generateTokenAndSetCookie from "../utils/helpers/generateTokenAndSetCooki
 const signupUser = async (req, res) => {
     try {
       const { email, username, password } = req.body; //express json allow to do this
+  
+
+      // check valid format email
+      const validEmail = () => {
+          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return re.test(String(email).toLowerCase());
+      };
+    
+      
       if (!email || !username || !password) {
         return res.status(400).json({ error: "Please fill in all fields" });
       }
   
+
+      if (!validEmail()) {
+        return res.status(400).json({ error: "Your email format is not valid" });
+      }
+    
       const user = await User.findOne({
         $or: [{ email }, { username }],
       });

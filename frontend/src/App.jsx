@@ -12,9 +12,6 @@ import TestPage from './pages/TestPage';
 import FaqPage from './pages/FaqPage';
 import FloatingLogo from './components/FloatingLogo';
 import HomePage from './pages/HomePage';
-import AIModal from './components/AIModel';
-import BackToTop from './components/BackToTop';
-import Live2DComponent from './components/live2dModel';
 
 function App() {
   const user = useRecoilValue(userAtom);
@@ -28,11 +25,10 @@ function App() {
   }, [location.pathname, user, noHeaderRoutes]);
 
   return (
-    <Box position="relative" w="full" >
+    <Box w="full" >
       {showHeader && <Header user={user} />}
       <Box
         pt={showHeader ? { base: '60px', md: '70px' } : '0'}
-      // minHeight={showHeader ? 'calc(100vh - 70px)' : '100vh'}
       >
         <Routes>
           <Route path="/" element={user ? <HomePage /> : <Navigate to="/auth" />} />
@@ -42,11 +38,10 @@ function App() {
           <Route path="/test" element={<TestPage />} />
           <Route path="/faq" element={<FaqPage />} />
         </Routes>
-        <BackToTop />
       </Box>
 
       {/* {user && <AIModal currentUser={user} />} */}
-      <Live2DComponent />
+      {/* <Live2DComponent /> */}
     </Box>
   );
 }

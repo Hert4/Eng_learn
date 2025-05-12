@@ -8,6 +8,9 @@ import { FaArrowRight, FaStar, FaStarHalfAlt, FaBook, FaPlayCircle, FaChartLine,
 import { useInView } from 'react-intersection-observer';
 import { motion } from 'framer-motion';
 import Live2DComponent from '../components/live2dModel';
+import { Route } from 'react-router-dom';
+import { Link as RouterLink } from "react-router-dom"
+import Footer from "../components/Footer"
 
 // Motion wrapper for Chakra components
 const MotionBox = motion(Box);
@@ -119,12 +122,14 @@ const HomePage = () => {
                 justifyContent="space-around"
             >
                 {[
-                    { icon: FaBook, label: 'Home', href: '#hero' },
-                    { icon: FaPlayCircle, label: 'Lessons', href: '#lessons' },
-                    { icon: FaMicrophone, label: 'Practice', href: '#practice' },
-                    { icon: FaChartLine, label: 'Progress', href: '#progress' },
+                    { icon: FaBook, label: 'Home', href: '/' },
+                    { icon: FaPlayCircle, label: 'Exercise', href: '/exercise' },
+                    { icon: FaMicrophone, label: 'Test', href: '/test' },
+                    { icon: FaChartLine, label: 'FAQ', href: '/faq' },
                 ].map((item, index) => (
-                    <Link key={index} href={item.href} display="flex" flexDir="column" alignItems="center" color={currentColors.primary} _hover={{ color: currentColors.secondary }}>
+                    <Link key={index}
+                        as={RouterLink}
+                        to={item.href} display="flex" flexDir="column" alignItems="center" color={currentColors.primary} _hover={{ color: currentColors.secondary }}>
                         <Icon as={item.icon} boxSize={6} />
                         <Text fontSize="xs">{item.label}</Text>
                     </Link>
@@ -135,7 +140,10 @@ const HomePage = () => {
             <MotionBox
                 as="section"
                 id="hero"
-                bgGradient="radial-gradient(circle at 80% 50%, rgba(0, 122, 255, 0.2) 0%, transparent 60%)"
+                // className={"bg-linear-to-t from-sky-500 to-indigo-500"}
+                bgGradient={colorMode === 'light' ? "linear-gradient(to bottom,rgb(108, 202, 242),rgb(210, 247, 246), transparent 60%)" :
+                    "linear-gradient(to bottom,rgb(1, 21, 66), rgba(36, 36, 38, 0.94), transparent 80%)"
+                }
                 py={{ base: 16, md: 24 }}
                 px={{ base: 4, md: 6 }}
                 position="relative"
@@ -200,8 +208,8 @@ const HomePage = () => {
                                     </Button>
                                 </HStack>
                                 <HStack mt={8} spacing={4} align="center">
-                                    <HStack spacing={-2}>
-                                        {['https://randomuser.me/api/portraits/women/12.jpg', 'https://randomuser.me/api/portraits/men/43.jpg', 'https://randomuser.me/api/portraits/women/34.jpg'].map((src, i) => (
+                                    {/* <HStack spacing={-2}>
+                                        {['', '', ''].map((src, i) => (
                                             <Avatar
                                                 key={i}
                                                 src={src}
@@ -212,15 +220,15 @@ const HomePage = () => {
                                                 transition="all 0.2s"
                                             />
                                         ))}
-                                    </HStack>
-                                    <VStack align="start" spacing={1} fontSize="sm">
+                                    </HStack> */}
+                                    {/* <VStack align="start" spacing={1} fontSize="sm">
                                         <Text>Trusted by <Text as="span" fontWeight="bold">30,000+</Text> learners</Text>
                                         <HStack>
                                             <Icon as={FaStar} color="yellow.400" />
                                             <Text fontWeight="semibold">4.8/5</Text>
                                             <Text opacity={0.7}>(3,214 reviews)</Text>
                                         </HStack>
-                                    </VStack>
+                                    </VStack> */}
                                 </HStack>
                             </VStack>
                         </FadeInSection>
@@ -232,9 +240,11 @@ const HomePage = () => {
                                 initial={{ y: 20 }}
                                 animate={{ y: 0 }}
                                 transition={{ duration: 6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-                                top={{ base: 0, md: 20 }}
+                                top={{ base: 0, md: 5 }}
+                                gap={2}
                             >
                                 {/* <Image
+                                    src="/images/python-futuristic-5120x2880-15994.png"
                                     alt="English Learning"
                                     rounded="3xl"
                                     shadow="2xl"
@@ -244,8 +254,23 @@ const HomePage = () => {
                                     border="1px"
                                     borderColor={currentColors.glass}
                                     backdropFilter="blur(10px)"
+                                    background={'red'}
+                                />
+                                <Image
+                                    src="/images/python-futuristic-5120x2880-15994.png"
+                                    alt="English Learning"
+                                    rounded="3xl"
+                                    shadow="2xl"
+                                    objectFit="cover"
+                                    maxH={{ base: '300px', md: '500px' }}
+                                    w="full"
+                                    border="1px"
+                                    borderColor={currentColors.glass}
+                                    backdropFilter="blur(10px)"
+                                    background={'red'}
                                 /> */}
                                 <Live2DComponent />
+
                             </MotionBox>
                         </FadeInSection>
                     </Grid>
@@ -264,7 +289,7 @@ const HomePage = () => {
                                 lineHeight="tight"
                             >
                                 Your Path to{' '}
-                                <Box as="span" bgGradient="linear(to-r, #007AFF, #0A84FF)" bgClip="text">
+                                <Box as="span" bgGradient="linear(to-r, #007AFF, #ca0aff)" bgClip="text">
                                     English Fluency
                                 </Box>
                             </Heading>
@@ -275,12 +300,12 @@ const HomePage = () => {
                     </FadeInSection>
                     <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6}>
                         {[
-                            { icon: FaBook, title: 'Interactive Lessons', desc: 'Engaging video and text-based lessons tailored to your level.', delay: 0 },
-                            { icon: FaMicrophone, title: 'Pronunciation Practice', desc: 'AI-powered feedback to perfect your speaking skills.', delay: 0.1 },
-                            { icon: FaChartLine, title: 'Track Progress', desc: 'Monitor your improvement with detailed analytics.', delay: 0.2 },
-                            { icon: FaClock, title: 'Daily Challenges', desc: 'Quick exercises to keep you learning every day.', delay: 0.3 },
-                            { icon: FaPlayCircle, title: 'Listening Practice', desc: 'Real-world audio to boost comprehension.', delay: 0.4 },
-                            { icon: FaHeadset, title: '24/7 Support', desc: 'Get help from our team anytime.', delay: 0.5 },
+                            { icon: FaBook, title: 'Interactive Lessons', desc: 'Engaging video and text-based lessons.', delay: 0 },
+                            { icon: FaMicrophone, title: 'Pronunciation Practice', desc: 'AI-powered feedback to perfect your speaking skills.', delay: 0.05 },
+                            { icon: FaChartLine, title: 'Track Progress', desc: 'Monitor your improvement with detailed analytics.', delay: 0.1 },
+                            { icon: FaClock, title: 'Daily Challenges', desc: 'Quick exercises to keep you learning every day.', delay: 0.15 },
+                            { icon: FaPlayCircle, title: 'Listening Practice', desc: 'Real-world audio to boost comprehension.', delay: 0.2 },
+                            { icon: FaHeadset, title: '24/7 Support', desc: 'Get help from our team anytime.', delay: 0.25 },
                         ].map((feature, index) => (
                             <FadeInSection key={index} animation="fade-in slide-up" delay={feature.delay}>
                                 <MotionBox
@@ -325,7 +350,7 @@ const HomePage = () => {
                                 color={currentColors.primary}
                                 fontWeight="semibold"
                                 fontSize="lg"
-                                _hover={{ color: currentColors.secondary, textDecoration: 'underline' }}
+                                // _hover={{ color: currentColors.secondary, color: '#ca0aff' }}
                                 display="flex"
                                 alignItems="center"
                                 mx="auto"
@@ -349,7 +374,7 @@ const HomePage = () => {
                                 lineHeight="tight"
                             >
                                 What Our{' '}
-                                <Box as="span" bgGradient="linear(to-r, #007AFF, #0A84FF)" bgClip="text">
+                                <Box as="span" bgGradient="linear(to-r, #007AFF, #ca0aff)" bgClip="text">
                                     Learners Say
                                 </Box>
                             </Heading>
@@ -421,7 +446,7 @@ const HomePage = () => {
                             lineHeight="tight"
                         >
                             Frequently Asked{' '}
-                            <Box as="span" bgGradient="linear(to-r, #007AFF, #0A84FF)" bgClip="text">
+                            <Box as="span" bgGradient="linear(to-r, #007AFF, #ca0aff)" bgClip="text">
                                 Questions
                             </Box>
                         </Heading>
@@ -480,6 +505,7 @@ const HomePage = () => {
                                 as={Link}
                                 href="#support"
                                 variant="link"
+                                // bgGradient="linear(to-r, #007AFF, #ca0aff)"
                                 color={currentColors.primary}
                                 fontWeight="semibold"
                                 fontSize="lg"
@@ -494,6 +520,7 @@ const HomePage = () => {
                     </FadeInSection>
                 </Box>
             </Box>
+            <Footer />
         </Box>
     );
 };

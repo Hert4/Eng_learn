@@ -118,6 +118,7 @@ const Header = ({ user }) => {
     return (
         <>
             <MotionBox
+
                 as="nav"
                 position="fixed"
                 w="full"
@@ -145,13 +146,13 @@ const Header = ({ user }) => {
                 >
                     {/* Logo here */}
                     <MotionLink
-                        as={Link}
-                        href="/"
+                        as={RouterLink}
+                        to="/"
                         fontSize={{ base: 'xl', md: '2xl' }}
-                        fontWeight="600"
+                        fontWeight="700"
                         fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                        color={currentColors.primary}
-                        _hover={{ color: currentColors.primary, opacity: 0.8 }}
+                        // color={currentColors.primary}
+                        _hover={{ color: "linear(to-r, #007AFF, #ca0aff)", opacity: 0.8 }}
                         display="flex"
                         alignItems="center"
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -162,8 +163,11 @@ const Header = ({ user }) => {
                         }}
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.97 }}
+                        color={'linear(to-r, #007AFF, #ca0aff)'}
                     >
-                        Opic
+                        <Box as="span" bgGradient="linear(to-r, #007AFF,rgb(255, 10, 10))" bgClip="text">
+                            Opic/SEVT L&D
+                        </Box>
                     </MotionLink>
 
                     {/* Desktop nav links  */}

@@ -20,11 +20,12 @@ import { HiSparkles } from 'react-icons/hi';
 const Footer = () => {
     return (
         <Box as="footer" bg="gray.900" color="white" pt={16} pb={8} px={6}>
-            <Box maxW="7xl" mx="auto">
+            <VStack maxW="7xl" mx="auto" >
                 <Grid
-                    templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }}
-                    gap={8}
+                    templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }}
+                    gap={{ base: 50, md: 400 }}
                     mb={12}
+
                 >
                     {/* Company */}
                     <VStack align="start">
@@ -35,79 +36,36 @@ const Footer = () => {
                             About
                         </Link>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Careers
+                            Facebook
                         </Link>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Blog
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Press
+                            Youtube
                         </Link>
                     </VStack>
 
-                    {/* Product */}
                     <VStack align="start">
                         <Text fontSize="lg" fontWeight="bold" mb={4}>
-                            Product
+                            Company
                         </Text>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Features
+                            About
                         </Link>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Pricing
+                            Facebook
                         </Link>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Integrations
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Roadmap
+                            Youtube
                         </Link>
                     </VStack>
 
-                    {/* Resources */}
-                    <VStack align="start">
-                        <Text fontSize="lg" fontWeight="bold" mb={4}>
-                            Resources
-                        </Text>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Help Center
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Community
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Webinars
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            API Docs
-                        </Link>
-                    </VStack>
-
-                    {/* Legal */}
-                    <VStack align="start">
-                        <Text fontSize="lg" fontWeight="bold" mb={4}>
-                            Legal
-                        </Text>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Privacy
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Terms
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Security
-                        </Link>
-                        <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            GDPR
-                        </Link>
-                    </VStack>
                 </Grid>
 
-                <Box borderTop="1px" borderColor="gray.800" pt={8}>
+                <Box borderTop="1px" borderColor="gray.800" pt={8} >
                     <Flex
                         direction={{ base: 'column', md: 'row' }}
                         justify="space-between"
                         align="center"
+                        gap={{ base: 50, md: 200 }}
                     >
                         <VStack align={{ base: 'center', md: 'start' }} mb={{ base: 4, md: 0 }}>
                             <Link
@@ -119,8 +77,7 @@ const Footer = () => {
                                 display="flex"
                                 alignItems="center"
                             >
-                                <HiSparkles color="gold" style={{ marginRight: '4px' }} />
-                                Lumina
+                                S/W Automation P
                             </Link>
                             <Text fontSize="sm" color="gray.500">
                                 Solving complex problems with simple solutions.
@@ -145,9 +102,9 @@ const Footer = () => {
                 </Box>
 
                 <Text mt={8} textAlign="center" fontSize="sm" color="gray.500">
-                    © 2023 Lumina, Inc. All rights reserved.
+                    © Landing page made by S/W Automation P.
                 </Text>
-            </Box>
+            </VStack>
         </Box>
     );
 };

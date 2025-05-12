@@ -21,7 +21,7 @@ import { motion } from "framer-motion";
 import { User, Mail, Phone, Calendar, Lock, Award } from 'lucide-react';
 import useShowToast from "../hooks/showToast";
 import userAtom from "../atom/userAtom";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useRecoilState, useRecoilValue } from "recoil";
 
 const MotionBox = motion(Box);
@@ -35,6 +35,7 @@ const UserProfile = () => {
     const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
     const { isOpen: isPasswordOpen, onOpen: onPasswordOpen, onClose: onPasswordClose } = useDisclosure();
     const cancelRef = useRef();
+    const navigate = useNavigate(); // Khởi tạo useNavigate
 
     // Form states
     const [formData, setFormData] = useState({
@@ -171,6 +172,7 @@ const UserProfile = () => {
             localStorage.setItem('user', JSON.stringify(data))
             setIsUpdating(false);
             onEditClose();
+            navigate(`/${data.username}`);
         } catch (error) {
             setIsUpdating(false);
             showToast('Error', error, 'error')
@@ -537,8 +539,7 @@ const UserProfile = () => {
                                 </Button>
                                 <Button
                                     onClick={handleProfileUpdate}
-                                    as={RouterLink}
-                                    to={`/${currentColors.username}`}
+
                                     bg={currentColors.primary}
                                     color="white"
                                     borderRadius="lg"

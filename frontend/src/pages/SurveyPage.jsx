@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
     Box,
     Button,
@@ -8,7 +8,7 @@ import {
     Flex,
     Progress,
     useColorMode,
-    useToast,
+
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -17,6 +17,8 @@ import LanguageBackgroundForm from "../components/LanguageBackgroundForm";
 import MicrophoneSetup from "../components/MicrophoneSetup";
 import SpeakingTest from "../components/SpeakingTest";
 import CompletionScreen from "../components/ComplementScreen";
+import useShowToast from "../hooks/showToast";
+// import { useLoading } from "../hooks/useLoading";
 
 const MotionBox = motion(Box);
 
@@ -32,154 +34,194 @@ const SurveyPage = () => {
     const [stage, setStage] = useState(0);
     const [formData, setFormData] = useState({});
     const [recording, setRecording] = useState(false);
-    const [micSetupAudioUrl, setMicSetupAudioUrl] = useState(null);
-    const [speakingTestAudioUrl, setSpeakingTestAudioUrl] = useState(null);
+    const [audioData, setAudioData] = useState({
+        micSetup: { blob: null, url: null },
+        speakingTest: { blob: null, url: null }
+    });
     const [micAccess, setMicAccess] = useState(false);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const streamRef = useRef(null);
     const { colorMode } = useColorMode();
-    const toast = useToast();
+    const showToast = useShowToast();
     const isLight = colorMode === "light";
+
+    // check submitting stase
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Check microphone access
     useEffect(() => {
         const checkMicAccess = async () => {
             try {
-                await navigator.mediaDevices.getUserMedia({ audio: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                streamRef.current = stream;
                 setMicAccess(true);
+                console.log("Microphone access granted");
             } catch (error) {
                 console.error("Microphone access denied:", error);
                 setMicAccess(false);
+                showToast("Error", "Microphone access denied", "error");
             }
         };
         checkMicAccess();
-    }, []);
 
-    // Clean up blob URLs
-    useEffect(() => {
         return () => {
-            if (micSetupAudioUrl) {
-                console.log("Revoking micSetupAudioUrl:", micSetupAudioUrl);
-                URL.revokeObjectURL(micSetupAudioUrl);
-            }
-            if (speakingTestAudioUrl) {
-                console.log("Revoking speakingTestAudioUrl:", speakingTestAudioUrl);
-                URL.revokeObjectURL(speakingTestAudioUrl);
+            // Cleanup stream on unmount
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+                streamRef.current = null;
+                console.log("Cleaned up media stream");
             }
         };
-    }, [micSetupAudioUrl, speakingTestAudioUrl]);
+    }, [showToast]);
 
+    // Clean up audio URLs only on component unmount
+    useEffect(() => {
+        return () => {
+            // Only clean up on unmount, not when navigating
+            if (stage === stages.length - 1) { // When completing the survey
+                Object.entries(audioData).forEach(([key, { url }]) => {
+                    if (url) {
+                        console.log(`Revoking URL for ${key} on unmount:`, url);
+                        URL.revokeObjectURL(url);
+                    }
+                });
+            }
+        };
+    }, [audioData, stage]);
     const handleInputChange = (field, value) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const startRecording = async (stageIndex) => {
+    const blobToBase64 = useCallback(async (blob) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }, []);
+
+    const sendAudioToFlask = useCallback(async () => {
+        const speakingTestData = audioData["speakingTest"];
+        if (!speakingTestData?.url) {
+            showToast("Error", "No audio to upload", "error");
+            return false;
+        }
+
+        setIsSubmitting(true); // Bật loading
+
+        try {
+            const base64Audio = await blobToBase64(speakingTestData.blob);
+            const res = await fetch("http://107.114.184.16:3000/GetAccuracyFromRecordedAudio", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: "Speaking Test",
+                    base64Audio,
+                    language: "en",
+                }),
+            });
+
+            const data = await res.json();
+            if (data.error) {
+                showToast("Upload Failed", data.error, "error");
+                return false;
+            }
+
+            showToast("Success", "Audio uploaded successfully", "success");
+            return true;
+        } catch (error) {
+            console.error("Upload error:", error);
+            showToast("Upload Failed", "An unexpected error occurred", "error");
+            return false;
+        } finally {
+            setIsSubmitting(false); // Tắt loading dù thành công hay thất bại
+        }
+    }, [audioData, blobToBase64, showToast]);
+
+    const startRecording = useCallback(async (stageIndex) => {
         try {
             audioChunksRef.current = [];
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
+            if (!streamRef.current || streamRef.current.getTracks().every(track => !track.enabled)) {
+                streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log("New media stream acquired");
+            }
+
+            const mediaRecorder = new MediaRecorder(streamRef.current);
             mediaRecorderRef.current = mediaRecorder;
 
-            mediaRecorder.addEventListener("dataavailable", (event) => {
+            mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     audioChunksRef.current.push(event.data);
-                    console.log("Data available, chunk size:", event.data.size);
                 }
-            });
+            };
 
-            mediaRecorder.addEventListener("stop", () => {
-                console.log("Audio chunks length:", audioChunksRef.current.length);
+            mediaRecorder.onstop = () => {
                 if (audioChunksRef.current.length === 0) {
-                    toast({
-                        title: "Error",
-                        description: "No audio data recorded",
-                        status: "error",
-                        duration: 5000,
-                        isClosable: true,
-                    });
-                    stream.getTracks().forEach((track) => track.stop());
+                    showToast("Error", "No audio data recorded", "error");
                     return;
                 }
+
                 const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-                console.log("Audio blob size:", audioBlob.size);
                 if (audioBlob.size < 100) {
-                    toast({
-                        title: "Error",
-                        description: "Recorded audio is too short or invalid",
-                        status: "error",
-                        duration: 5000,
-                        isClosable: true,
-                    });
-                    stream.getTracks().forEach((track) => track.stop());
+                    showToast("Error", "Recorded audio is too short or invalid", "error");
                     return;
                 }
+
                 const url = URL.createObjectURL(audioBlob);
-                console.log("Audio URL:", url);
-                if (stageIndex === 2) {
-                    setMicSetupAudioUrl(url);
-                } else if (stageIndex === 3) {
-                    setSpeakingTestAudioUrl(url);
-                }
-                stream.getTracks().forEach((track) => track.stop());
-                toast({
-                    title: "Recording saved",
-                    description: "Your audio has been successfully saved.",
-                    status: "success",
-                    duration: 2000,
-                    isClosable: true,
-                });
-            });
+                const key = stageIndex === 2 ? "micSetup" : "speakingTest";
+
+                setAudioData(prev => ({
+                    ...prev,
+                    [key]: { blob: audioBlob, url }
+                }));
+
+                showToast("Success", "Recording saved", "success");
+            };
 
             mediaRecorder.start(100);
             setRecording(true);
+            showToast("Info", "Recording started", "info");
 
+            // Auto-stop after 2 minutes
             setTimeout(() => {
-                if (recording) {
-                    stopRecording();
-                }
+                if (recording) stopRecording();
             }, 120000);
-
-            toast({
-                title: "Recording started",
-                description: "Speak clearly into your microphone",
-                status: "info",
-                duration: 2000,
-                isClosable: true,
-            });
         } catch (err) {
             console.error("Recording error:", err);
-            toast({
-                title: "Microphone access denied",
-                description: "Please allow microphone access to continue",
-                status: "error",
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-            mediaRecorderRef.current.stop();
+            showToast("Error", "Microphone access denied", "error");
             setRecording(false);
         }
-    };
+    }, [recording, showToast]);
 
-    const downloadAudio = () => {
-        if (speakingTestAudioUrl) {
+    const stopRecording = useCallback(() => {
+        if (mediaRecorderRef.current?.state !== "inactive") {
+            mediaRecorderRef.current.stop();
+            setRecording(false);
+            console.log("Recording stopped");
+        }
+    }, []);
+
+    const downloadAudio = useCallback(() => {
+        const speakingTestData = audioData["speakingTest"];
+        if (speakingTestData?.url) {
             const link = document.createElement("a");
-            link.href = speakingTestAudioUrl;
+            link.href = speakingTestData.url;
             link.download = "speaking_test_audio.webm";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        } else {
+            showToast("Error", "No audio available to download", "error");
         }
-    };
+    }, [audioData, showToast]);
 
-    const handleNext = () => {
+    const handleNext = async () => {
+        if (stage === 3) {
+            const success = await sendAudioToFlask();
+            if (!success) return;
+        }
         if (stage < stages.length - 1) {
             setStage(stage + 1);
         }
@@ -187,19 +229,34 @@ const SurveyPage = () => {
 
     const handleBack = () => {
         if (stage > 0) {
+            // Don't clean up audio data when going back
+            console.log("Navigating back to stage:", stage - 1, "Current audioData:", audioData);
             setStage(stage - 1);
         }
     };
 
-    const resetSurvey = () => {
+    const resetSurvey = useCallback(() => {
         setStage(0);
         setFormData({});
-        setMicSetupAudioUrl(null);
-        setSpeakingTestAudioUrl(null);
+        setAudioData(prev => {
+            Object.entries(prev).forEach(([key, { url }]) => {
+                if (url) {
+                    console.log(`Revoking URL for ${key} on reset:`, url);
+                    URL.revokeObjectURL(url);
+                }
+            });
+            return {};
+        });
         setRecording(false);
-    };
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+            console.log("Cleaned up media stream on reset");
+        }
+    }, []);
 
     const renderCurrentStage = () => {
+        console.log("Rendering stage:", stage, "audioData:", audioData);
         switch (stage) {
             case 0:
                 return <PersonalInfoForm formData={formData} handleInputChange={handleInputChange} />;
@@ -211,7 +268,7 @@ const SurveyPage = () => {
                         recording={recording}
                         startRecording={() => startRecording(2)}
                         stopRecording={stopRecording}
-                        audioUrl={micSetupAudioUrl}
+                        audioUrl={audioData["micSetup"]?.url}
                         micAccess={micAccess}
                     />
                 );
@@ -221,7 +278,7 @@ const SurveyPage = () => {
                         recording={recording}
                         startRecording={() => startRecording(3)}
                         stopRecording={stopRecording}
-                        audioUrl={speakingTestAudioUrl}
+                        audioUrl={audioData["speakingTest"]?.url}
                         downloadAudio={downloadAudio}
                     />
                 );
@@ -242,11 +299,7 @@ const SurveyPage = () => {
         >
             <VStack spacing={8} w="full" maxW="2xl">
                 <VStack spacing={2} w="full">
-                    <Heading
-                        size="xl"
-                        fontWeight="bold"
-                        color={isLight ? "blue.600" : "blue.300"}
-                    >
+                    <Heading size="xl" fontWeight="bold" color={isLight ? "blue.600" : "blue.300"}>
                         OPIC Speaking Assessment
                     </Heading>
                     <Text color="gray.500">{stages[stage].title}</Text>
@@ -294,16 +347,17 @@ const SurveyPage = () => {
                             rightIcon={<ChevronRight size={20} />}
                             onClick={handleNext}
                             colorScheme="blue"
+                            isLoading={isSubmitting}
+                            loadingText="Submitting..."
                             isDisabled={
+                                isSubmitting || // Disable khi đang loading
                                 (stage === 0 && (!formData.name || !formData.ageGroup)) ||
                                 (stage === 1 &&
                                     (!formData.englishLevel ||
-                                        (formData.englishLevel === "beginner" &&
-                                            !formData.supportNeeded) ||
-                                        (formData.englishLevel === "advanced" &&
-                                            !formData.certificationPrep))) ||
-                                (stage === 2 && !micSetupAudioUrl) ||
-                                (stage === 3 && !speakingTestAudioUrl)
+                                        (formData.englishLevel === "beginner" && !formData.supportNeeded) ||
+                                        (formData.englishLevel === "advanced" && !formData.certificationPrep))) ||
+                                (stage === 2 && !audioData["micSetup"]?.url) ||
+                                (stage === 3 && !audioData["speakingTest"]?.url)
                             }
                         >
                             {stage === stages.length - 2 ? "Submit" : "Next"}

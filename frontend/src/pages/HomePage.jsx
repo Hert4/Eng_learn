@@ -3,24 +3,31 @@ import {
     Box, Flex, Text, Heading, Button, Link, Image, Grid, VStack, HStack, Avatar, Icon,
     Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
     useColorMode,
+    Card, CardHeader, CardBody, CardFooter, IconButton,
 } from '@chakra-ui/react';
-import { FaArrowRight, FaStar, FaStarHalfAlt, FaBook, FaPlayCircle, FaChartLine, FaMicrophone, FaClock, FaHeadset, FaCheck } from 'react-icons/fa';
+import {
+    FaArrowRight, FaStar, FaStarHalfAlt, FaBook, FaPlayCircle, FaChartLine,
+    FaMicrophone, FaClock, FaHeadset, FaCheck, FaHome, FaQuestionCircle,
+} from 'react-icons/fa';
 import { useInView } from 'react-intersection-observer';
-import { motion } from 'framer-motion';
-import Live2DComponent from '../components/live2dModel';
-import { Route } from 'react-router-dom';
-import { Link as RouterLink } from "react-router-dom"
-import Footer from "../components/Footer"
+import { motion, useReducedMotion } from 'framer-motion';
+import { Link as RouterLink } from 'react-router-dom';
+import Footer from '../components/Footer';
+import { HiLightBulb } from 'react-icons/hi';
+import { BsThreeDotsVertical } from 'react-icons/bs';
 
 // Motion wrapper for Chakra components
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
 
-// Fade-in animation component
+// Fade-in animation component added 3d styl
 const FadeInSection = ({ children, animation = 'fade-in', delay = 0 }) => {
     const { ref, inView } = useInView({ threshold: 0.2, triggerOnce: true });
     const [isVisible, setIsVisible] = useState(false);
+    const shouldReduceMotion = useReducedMotion();
+    const [autoAnimation, setAutoAnimation] = useState({ rotateX: 0, rotateY: 0, z: 0 });
 
+    // Handle initial visibility
     useEffect(() => {
         const timer = setTimeout(() => {
             if (inView) setIsVisible(true);
@@ -28,31 +35,67 @@ const FadeInSection = ({ children, animation = 'fade-in', delay = 0 }) => {
         return () => clearTimeout(timer);
     }, [inView]);
 
+    // Auto 3D animation with random intervals
+    useEffect(() => {
+        if (!isVisible || shouldReduceMotion) return;
+
+        const triggerRandomAnimation = () => {
+            const randomRotateX = Math.random() * 6 - 3; // -3 to 3 degrees
+            const randomRotateY = Math.random() * 6 - 3; // -3 to 3 degrees
+            const randomZ = Math.random() * 10 - 5; // -5 to 5 pixels
+            setAutoAnimation({ rotateX: randomRotateX, rotateY: randomRotateY, z: randomZ });
+        };
+
+        // Initial animation
+        triggerRandomAnimation();
+
+        // Set random interval for animation
+        const interval = setInterval(() => {
+            triggerRandomAnimation();
+        }, Math.random() * 3000 + 2000); // Random between 2-5 seconds
+
+        return () => clearInterval(interval);
+    }, [isVisible, shouldReduceMotion]);
+
     const variants = {
         hidden: {
             opacity: 0,
             y: animation.includes('slide-up') ? 30 : 0,
             x: animation.includes('slide-left') ? -30 : animation.includes('slide-right') ? 30 : 0,
             scale: animation.includes('scale-up') ? 0.95 : 1,
+            rotateX: animation.includes('3d-tilt') ? 10 : 0,
+            rotateY: animation.includes('3d-tilt') ? 10 : 0,
+            z: animation.includes('3d-tilt') ? -20 : 0,
         },
         visible: {
             opacity: 1,
             y: 0,
             x: 0,
             scale: 1,
-            transition: { duration: 0.6, ease: 'easeOut', delay },
+            rotateX: autoAnimation.rotateX,
+            rotateY: autoAnimation.rotateY,
+            z: autoAnimation.z,
+            transition: {
+                duration: 0.6,
+                ease: 'easeOut',
+                delay,
+                rotateX: { duration: 0.8, ease: 'easeInOut' },
+                rotateY: { duration: 0.8, ease: 'easeInOut' },
+                z: { duration: 0.8, ease: 'easeInOut' },
+            },
         },
     };
 
     return (
-        <MotionBox
+        <motion.div
             ref={ref}
             initial="hidden"
             animate={isVisible ? 'visible' : 'hidden'}
             variants={variants}
+            style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
         >
             {children}
-        </MotionBox>
+        </motion.div>
     );
 };
 
@@ -81,6 +124,26 @@ const HomePage = () => {
         },
     };
     const currentColors = iosColors[colorMode];
+    const shouldReduceMotion = useReducedMotion();
+
+    // 3D tilt effect for hero image
+    const heroImageVariants = {
+        initial: { y: 30, scale: 1, rotateX: 0, rotateY: 0, z: 0 },
+        animate: {
+            y: [30, -30],
+            scale: [1, 1.02],
+            transition: {
+                y: { duration: 6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' },
+                scale: { duration: 6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' },
+            },
+        },
+        hover: {
+            rotateX: 5,
+            rotateY: 5,
+            z: 20,
+            transition: { duration: 0.3, ease: 'easeOut' },
+        },
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -122,14 +185,21 @@ const HomePage = () => {
                 justifyContent="space-around"
             >
                 {[
-                    { icon: FaBook, label: 'Home', href: '/' },
-                    { icon: FaPlayCircle, label: 'Exercise', href: '/exercise' },
+                    { icon: FaHome, label: 'Home', href: '/' },
+                    { icon: FaBook, label: 'Exercise', href: '/exercise' },
                     { icon: FaMicrophone, label: 'Test', href: '/test' },
-                    { icon: FaChartLine, label: 'FAQ', href: '/faq' },
+                    { icon: FaQuestionCircle, label: 'FAQ', href: '/faq' },
                 ].map((item, index) => (
-                    <Link key={index}
+                    <Link
+                        key={index}
                         as={RouterLink}
-                        to={item.href} display="flex" flexDir="column" alignItems="center" color={currentColors.primary} _hover={{ color: currentColors.secondary }}>
+                        to={item.href}
+                        display="flex"
+                        flexDir="column"
+                        alignItems="center"
+                        color={currentColors.primary}
+                        _hover={{ color: currentColors.secondary }}
+                    >
                         <Icon as={item.icon} boxSize={6} />
                         <Text fontSize="xs">{item.label}</Text>
                     </Link>
@@ -140,16 +210,17 @@ const HomePage = () => {
             <MotionBox
                 as="section"
                 id="hero"
-                // className={"bg-linear-to-t from-sky-500 to-indigo-500"}
-                bgGradient={colorMode === 'light' ? "linear-gradient(to bottom,rgb(108, 202, 242),rgb(210, 247, 246), transparent 60%)" :
-                    "linear-gradient(to bottom,rgb(1, 21, 66), rgba(36, 36, 38, 0.94), transparent 80%)"
+                bgGradient={
+                    colorMode === 'light'
+                        ? 'linear-gradient(to bottom, rgb(108, 202, 242), rgb(210, 247, 246), transparent 60%)'
+                        : 'linear-gradient(to bottom, rgb(1, 21, 66), rgba(36, 36, 38, 0.94), transparent 80%)'
                 }
                 py={{ base: 16, md: 24 }}
                 px={{ base: 4, md: 6 }}
                 position="relative"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 100, damping: 20, duration: shouldReduceMotion ? 0 : 1 }}
             >
                 <Box maxW="7xl" mx="auto">
                     <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 8, md: 12 }} alignItems="center">
@@ -167,13 +238,8 @@ const HomePage = () => {
                                     </Box>{' '}
                                     EXAMATION
                                 </Heading>
-                                <Text
-                                    fontSize={{ base: 'md', md: 'lg' }}
-                                    maxW="lg"
-                                    opacity={0.9}
-                                    lineHeight="tall"
-                                >
-                                    Master English speaking, listening, and writing with interactive lessons for just $9.99/month.
+                                <Text fontSize={{ base: 'md', md: 'lg' }} maxW="lg" opacity={0.9} lineHeight="tall">
+                                    Master English speaking and listening with Opic
                                 </Text>
                                 <HStack spacing={4} flexWrap="wrap">
                                     <MotionButton
@@ -186,91 +252,57 @@ const HomePage = () => {
                                         rounded="full"
                                         fontWeight="semibold"
                                         fontSize="lg"
-                                        whileHover={{ scale: 1.08, boxShadow: '0 8px 20px rgba(0, 122, 255, 0.4)' }}
-                                        whileTap={{ scale: 0.92 }}
-                                        _hover={{}}
-                                        transition="all 0.2s ease"
+                                        whileHover={{
+                                            scale: 1.05,
+                                            boxShadow: '0 8px 20px rgba(0, 122, 255, 0.4)',
+                                            rotateX: 5,
+                                            rotateY: 5,
+                                            z: 10,
+                                            transition: { type: 'spring', stiffness: 300, damping: 15 },
+                                        }}
+                                        whileTap={{ scale: 0.95 }}
+                                        transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+                                        style={{ perspective: '1000px' }}
                                     >
                                         Start Free Trial
                                     </MotionButton>
-                                    <Button
-                                        as={Link}
-                                        href="#features"
+                                    <MotionButton
+                                        as={RouterLink}
+                                        to="/"
                                         variant="link"
                                         color={currentColors.primary}
                                         fontWeight="semibold"
                                         fontSize="lg"
-                                        _hover={{ color: currentColors.secondary, textDecoration: 'underline' }}
+                                        whileHover={{ x: 5, color: currentColors.secondary }}
+                                        whileTap={{ scale: 0.95 }}
                                         display="flex"
                                         alignItems="center"
                                     >
                                         Explore Features <Icon as={FaArrowRight} ml={2} />
-                                    </Button>
-                                </HStack>
-                                <HStack mt={8} spacing={4} align="center">
-                                    {/* <HStack spacing={-2}>
-                                        {['', '', ''].map((src, i) => (
-                                            <Avatar
-                                                key={i}
-                                                src={src}
-                                                size="sm"
-                                                border="2px"
-                                                borderColor={currentColors.glass}
-                                                _hover={{ transform: 'translateY(-2px)' }}
-                                                transition="all 0.2s"
-                                            />
-                                        ))}
-                                    </HStack> */}
-                                    {/* <VStack align="start" spacing={1} fontSize="sm">
-                                        <Text>Trusted by <Text as="span" fontWeight="bold">30,000+</Text> learners</Text>
-                                        <HStack>
-                                            <Icon as={FaStar} color="yellow.400" />
-                                            <Text fontWeight="semibold">4.8/5</Text>
-                                            <Text opacity={0.7}>(3,214 reviews)</Text>
-                                        </HStack>
-                                    </VStack> */}
+                                    </MotionButton>
                                 </HStack>
                             </VStack>
                         </FadeInSection>
-                        <FadeInSection animation="fade-in slide-right">
+                        <FadeInSection animation="fade-in slide-right 3d-tilt">
                             <MotionBox
                                 position="relative"
                                 display="flex"
                                 justifyContent="center"
-                                initial={{ y: 20 }}
-                                animate={{ y: 0 }}
-                                transition={{ duration: 6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-                                top={{ base: 0, md: 5 }}
-                                gap={2}
+                                variants={heroImageVariants}
+                                initial="initial"
+                                animate="animate"
+                                whileHover={shouldReduceMotion ? {} : "hover"}
+                                style={{ perspective: '1000px' }}
                             >
-                                {/* <Image
-                                    src="/images/python-futuristic-5120x2880-15994.png"
-                                    alt="English Learning"
-                                    rounded="3xl"
-                                    shadow="2xl"
-                                    objectFit="cover"
-                                    maxH={{ base: '300px', md: '500px' }}
-                                    w="full"
-                                    border="1px"
-                                    borderColor={currentColors.glass}
-                                    backdropFilter="blur(10px)"
-                                    background={'red'}
-                                />
                                 <Image
-                                    src="/images/python-futuristic-5120x2880-15994.png"
+                                    src="images/developer.svg"
                                     alt="English Learning"
                                     rounded="3xl"
-                                    shadow="2xl"
                                     objectFit="cover"
                                     maxH={{ base: '300px', md: '500px' }}
                                     w="full"
-                                    border="1px"
-                                    borderColor={currentColors.glass}
-                                    backdropFilter="blur(10px)"
-                                    background={'red'}
-                                /> */}
-                                <Live2DComponent />
-
+                                    style={{ transformStyle: 'preserve-3d' }}
+                                />
                             </MotionBox>
                         </FadeInSection>
                     </Grid>
@@ -307,7 +339,7 @@ const HomePage = () => {
                             { icon: FaPlayCircle, title: 'Listening Practice', desc: 'Real-world audio to boost comprehension.', delay: 0.2 },
                             { icon: FaHeadset, title: '24/7 Support', desc: 'Get help from our team anytime.', delay: 0.25 },
                         ].map((feature, index) => (
-                            <FadeInSection key={index} animation="fade-in slide-up" delay={feature.delay}>
+                            <FadeInSection key={index} animation="fade-in slide-up 3d-tilt" delay={feature.delay}>
                                 <MotionBox
                                     p={6}
                                     rounded="2xl"
@@ -315,9 +347,20 @@ const HomePage = () => {
                                     backdropFilter="blur(10px)"
                                     border="1px"
                                     borderColor={currentColors.glass}
-                                    _hover={{ transform: 'translateY(-5px)', boxShadow: '0 10px 20px rgba(0, 122, 255, 0.2)' }}
-                                    transition="all 0.3s"
+                                    initial={{ rotateX: 0, rotateY: 0, z: 0 }}
+                                    whileHover={
+                                        shouldReduceMotion
+                                            ? {}
+                                            : {
+                                                rotateX: 8,
+                                                rotateY: 8,
+                                                z: 30,
+                                                boxShadow: '0 15px 30px rgba(0, 122, 255, 0.3)',
+                                                transition: { duration: 0.3, ease: 'easeOut' },
+                                            }
+                                    }
                                     whileTap={{ scale: 0.98 }}
+                                    style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
                                 >
                                     <Flex
                                         w={12}
@@ -350,7 +393,6 @@ const HomePage = () => {
                                 color={currentColors.primary}
                                 fontWeight="semibold"
                                 fontSize="lg"
-                                // _hover={{ color: currentColors.secondary, color: '#ca0aff' }}
                                 display="flex"
                                 alignItems="center"
                                 mx="auto"
@@ -385,11 +427,11 @@ const HomePage = () => {
                     </FadeInSection>
                     <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6}>
                         {[
-                            { name: 'Anna', title: 'Student', quote: 'I’m speaking English confidently after just 3 months!', stars: 5, delay: 0 },
-                            { name: 'Carlos', title: 'Professional', quote: 'The pronunciation tool is a game-changer.', stars: 5, delay: 0.1 },
-                            { name: 'Mei', title: 'Teacher', quote: 'My students love the interactive lessons!', stars: 4.5, delay: 0.2 },
+                            { name: 'Human-1', title: 'Student', quote: 'I’m speaking English confidently after just 3 months!', stars: 5, delay: 0 },
+                            { name: 'Human-2', title: 'Freelancer', quote: 'The pronunciation tool is a game-changer.', stars: 5, delay: 0.1 },
+                            { name: 'Human-3', title: 'Teacher', quote: 'My students love the interactive lessons!', stars: 4.5, delay: 0.2 },
                         ].map((testimonial, index) => (
-                            <FadeInSection key={index} animation="fade-in slide-up" delay={testimonial.delay}>
+                            <FadeInSection key={index} animation="fade-in slide-up 3d-tilt" delay={testimonial.delay}>
                                 <MotionBox
                                     bg={currentColors.glass}
                                     p={6}
@@ -398,9 +440,20 @@ const HomePage = () => {
                                     backdropFilter="blur(10px)"
                                     border="1px"
                                     borderColor={currentColors.glass}
-                                    _hover={{ transform: 'translateY(-5px)', boxShadow: '0 10px 20px rgba(0, 122, 255, 0.2)' }}
-                                    transition="all 0.3s"
+                                    initial={{ rotateX: 0, rotateY: 0, z: 0 }}
+                                    whileHover={
+                                        shouldReduceMotion
+                                            ? {}
+                                            : {
+                                                rotateX: 5,
+                                                rotateY: -5,
+                                                z: 20,
+                                                boxShadow: '0 10px 20px rgba(0, 122, 255, 0.2)',
+                                                transition: { duration: 0.3, ease: 'easeOut' },
+                                            }
+                                    }
                                     whileTap={{ scale: 0.98 }}
+                                    style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
                                 >
                                     <HStack align="center" mb={4}>
                                         <Avatar
@@ -433,7 +486,7 @@ const HomePage = () => {
                 </Box>
             </Box>
 
-            {/* FAQ Section */}
+            {/* FAQ Section (unchanged for brevity, but can add 3D effects if desired) */}
             <Box as="section" id="faq" py={20} px={{ base: 4, md: 6 }}>
                 <Box maxW="4xl" mx="auto">
                     <FadeInSection animation="fade-in">
@@ -453,8 +506,8 @@ const HomePage = () => {
                         <Accordion allowToggle>
                             {[
                                 {
-                                    question: 'How do I start learning?',
-                                    answer: 'Sign up for a free trial and take our placement test to find your level.',
+                                    question: 'How do I start ?',
+                                    answer: 'Make some excersice before go to real test.',
                                 },
                                 {
                                     question: 'Can I practice speaking?',
@@ -462,11 +515,11 @@ const HomePage = () => {
                                 },
                                 {
                                     question: 'Is the app beginner-friendly?',
-                                    answer: 'Absolutely, we offer lessons for all levels, from beginner to advanced.',
+                                    answer: 'Depend on you.',
                                 },
                                 {
                                     question: 'How do I track my progress?',
-                                    answer: 'Use our progress dashboard to see your improvement over time.',
+                                    answer: 'Go to your profile we save your previous test.',
                                 },
                             ].map((faq, index) => (
                                 <AccordionItem
@@ -505,11 +558,10 @@ const HomePage = () => {
                                 as={Link}
                                 href="#support"
                                 variant="link"
-                                // bgGradient="linear(to-r, #007AFF, #ca0aff)"
                                 color={currentColors.primary}
                                 fontWeight="semibold"
                                 fontSize="lg"
-                                _hover={{ color: currentColors.secondary, textDecoration: 'underline' }}
+                                _hover={{ color: '#ca0aff', textDecoration: 'underline' }}
                                 display="flex"
                                 alignItems="center"
                                 mx="auto"

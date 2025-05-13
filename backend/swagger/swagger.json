@@ -1,0 +1,92 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Sample Node.js API",
+        "version": "1.0.0",
+        "description": "API test với Swagger UI"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:5000",
+            "description": "Local server"
+        }
+    ],
+    "paths": {
+        "/api/users/profile/:query": {
+            "get": {
+                "summary": "Lấy danh sách người dùng",
+                "param": {
+                    "query": {
+                        "type": "string"
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Danh sách người dùng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Thêm người dùng mới",
+                "requestBody": {
+                    "description": "Thông tin người dùng",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "User": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Nguyen Van A"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "a@example.com"
+                    }
+                },
+                "required": [
+                    "name",
+                    "email"
+                ]
+            }
+        }
+    }
+}

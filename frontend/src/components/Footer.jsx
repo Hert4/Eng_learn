@@ -45,16 +45,16 @@ const Footer = () => {
 
                     <VStack align="start">
                         <Text fontSize="lg" fontWeight="bold" mb={4}>
-                            Company
+                            Count
                         </Text>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            About
+                            2
                         </Link>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Facebook
+                            3
                         </Link>
                         <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
-                            Youtube
+                            4
                         </Link>
                     </VStack>
 
@@ -94,9 +94,9 @@ const Footer = () => {
                             <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
                                 <Icon as={FaLinkedin} fontSize="xl" />
                             </Link>
-                            <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
+                            {/* <Link href="#" color="gray.400" _hover={{ color: 'white' }}>
                                 <Icon as={FaGithub} fontSize="xl" />
-                            </Link>
+                            </Link> */}
                         </HStack>
                     </Flex>
                 </Box>

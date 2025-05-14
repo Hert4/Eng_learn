@@ -118,9 +118,8 @@ const Header = ({ user }) => {
     return (
         <>
             <MotionBox
-
                 as="nav"
-                position="fixed"
+                position={'fixed'}
                 w="full"
                 bg={scrollY > 50
                     ? (colorMode === 'light' ? 'rgba(249, 249, 249, 0.8)' : 'rgba(36, 36, 38, 0.8)')
@@ -166,7 +165,7 @@ const Header = ({ user }) => {
                         color={'linear(to-r, #007AFF, #ca0aff)'}
                     >
                         <Box as="span" bgGradient="linear(to-r, #007AFF,rgb(255, 10, 10))" bgClip="text">
-                            Opic/SEVT L&D
+                            iLearning/SEVT
                         </Box>
                     </MotionLink>
 

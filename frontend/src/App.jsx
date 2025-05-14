@@ -12,7 +12,7 @@ import TestPage from './pages/TestPage';
 import FaqPage from './pages/FaqPage';
 import FloatingLogo from './components/FloatingLogo';
 import HomePage from './pages/HomePage';
-
+import AIModal from './components/AIModel'
 function App() {
   const user = useRecoilValue(userAtom);
   const location = useLocation();
@@ -28,7 +28,7 @@ function App() {
     <Box w="full" >
       {showHeader && <Header user={user} />}
       <Box
-        pt={showHeader ? { base: '60px', md: '70px' } : '0'}
+      // pt={showHeader ? { base: '60px', md: '70px' } : '0'}
       >
         <Routes>
           <Route path="/" element={user ? <HomePage /> : <Navigate to="/auth" />} />
@@ -40,7 +40,7 @@ function App() {
         </Routes>
       </Box>
 
-      {/* {user && <AIModal currentUser={user} />} */}
+      {user && <AIModal currentUser={user} />}
       {/* <Live2DComponent /> */}
     </Box>
   );

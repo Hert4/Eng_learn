@@ -16,13 +16,13 @@ import {
 import { Link as RouterLink } from "react-router-dom"
 import useGetUserProfile from "../hooks/useGetUserProfile";
 import { WarningTwoIcon, EditIcon } from "@chakra-ui/icons";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Calendar, Lock, Award } from 'lucide-react';
 import useShowToast from "../hooks/showToast";
 import userAtom from "../atom/userAtom";
 import { useNavigate } from "react-router-dom";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState } from "recoil";
 
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
@@ -34,7 +34,6 @@ const UserProfile = () => {
     const { colorMode } = useColorMode();
     const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
     const { isOpen: isPasswordOpen, onOpen: onPasswordOpen, onClose: onPasswordClose } = useDisclosure();
-    const cancelRef = useRef();
     const navigate = useNavigate(); // Khởi tạo useNavigate
 
     // Form states
@@ -228,7 +227,7 @@ const UserProfile = () => {
     return (
         <Container
             maxW="container.lg"
-            py={{ base: 4, md: 10 }}
+            py={{ base: 16, md: 24 }}
             px={{ base: 2, md: 4 }}
         >
             <VStack spacing={6} align="stretch" w={'full'}>

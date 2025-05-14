@@ -2,7 +2,7 @@ import React from "react";
 import { VStack, Text, IconButton, Tooltip, useColorMode, Box } from "@chakra-ui/react";
 import { Mic } from "lucide-react";
 import AudioPlayer from "./AudioPlayer";
-
+import useShowToast from "../hooks/showToast";
 const MicrophoneSetup = ({
     recording,
     startRecording,
@@ -13,11 +13,14 @@ const MicrophoneSetup = ({
     const { colorMode } = useColorMode();
     const isLight = colorMode === "light";
 
+
     return (
         <VStack spacing={8} align="center">
             <Text fontSize="xl" textAlign="center" fontWeight="semibold">
                 Let's check your microphone setup
+
             </Text>
+
             <Box textAlign="center">
                 <Tooltip
                     label={micAccess ? "Microphone ready" : "Microphone access required"}
@@ -48,8 +51,8 @@ const MicrophoneSetup = ({
                 </Text>
             </Box>
             {audioUrl && <AudioPlayer audioUrl={audioUrl} isLight={isLight} />}
-            <Text fontSize="sm" color="gray.500" textAlign="center">
-                Nói thử xem nào !!!
+            <Text fontSize="sm" color="gray.500" textAlign="center" fontWeight={'400'}>
+                Speak to microphone
             </Text>
         </VStack>
     );

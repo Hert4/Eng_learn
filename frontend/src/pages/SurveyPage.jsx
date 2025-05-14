@@ -48,6 +48,7 @@ const SurveyPage = () => {
 
     // check submitting stase
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [analysisResults, setAnalysisResults] = useState(null)
 
     // Check microphone access
     useEffect(() => {
@@ -102,6 +103,45 @@ const SurveyPage = () => {
         });
     }, []);
 
+
+    const [text, setText] = useState()
+
+    const getSample = async () => {
+        console.log(formData)
+        let cate = ''
+        if (formData.englishLevel === 'intermediate') {
+            cate = 1
+        }
+        else if (formData.englishLevel === 'beginer') {
+            cate = 0
+        }
+        else {
+            cate = 2
+        }
+        try {
+            const res = await fetch('https://107.114.184.16:3000/getSample', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    category: cate || 0,
+                    language: "en",
+                }),
+            });
+            const data = await res.json();
+            if (data.error) {
+                showToast("Upload Failed", data.error, "error");
+                return false;
+            }
+            console.log(data);
+            // Assuming data has the transcripts directly
+            setText(data); // Or setText(data.result) if nested
+            return true;
+        } catch (error) {
+            console.log(error);
+            showToast("Upload Failed", error, "error");
+            return false;
+        }
+    }
     const sendAudioToFlask = useCallback(async () => {
         const speakingTestData = audioData["speakingTest"];
         if (!speakingTestData?.url) {
@@ -113,11 +153,11 @@ const SurveyPage = () => {
 
         try {
             const base64Audio = await blobToBase64(speakingTestData.blob);
-            const res = await fetch("http://107.114.184.16:3000/GetAccuracyFromRecordedAudio", {
+            const res = await fetch("https://107.114.184.16:3000/GetAccuracyFromRecordedAudio", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    title: "Speaking Test",
+                    title: text?.real_transcript[0] || "Hello",
                     base64Audio,
                     language: "en",
                 }),
@@ -128,7 +168,10 @@ const SurveyPage = () => {
                 showToast("Upload Failed", data.error, "error");
                 return false;
             }
+            console.log(data)
 
+            setAnalysisResults(data);
+            console.log("Debug data:", analysisResults)
             showToast("Success", "Audio uploaded successfully", "success");
             return true;
         } catch (error) {
@@ -136,10 +179,37 @@ const SurveyPage = () => {
             showToast("Upload Failed", "An unexpected error occurred", "error");
             return false;
         } finally {
-            setIsSubmitting(false); // Tắt loading dù thành công hay thất bại
+            setIsSubmitting(false);
         }
     }, [audioData, blobToBase64, showToast]);
 
+    const [audio, setAudio] = useState()
+    const getAudioFromText = async () => {
+        try {
+            const res = await fetch('https://107.114.184.16:3000/getAudioFromText', {
+                method: "POST",
+                headers: "application/json",
+                body: {
+                    value: text?.real_transcript[0] || "Hello"
+                }
+            })
+
+            const data = res.json()
+            if (data.error) {
+                showToast('Error', data.error, 'error')
+                return false
+            }
+            console.log("Get Audio data: ", data)
+
+            setAudio(data)
+            return true
+        } catch (error) {
+            console.log(error)
+            showToast('Error', error, 'error')
+            return false
+        }
+
+    }
     const startRecording = useCallback(async (stageIndex) => {
         try {
             audioChunksRef.current = [];
@@ -218,6 +288,10 @@ const SurveyPage = () => {
     }, [audioData, showToast]);
 
     const handleNext = async () => {
+        if (stage === 1) {
+            const success = await getSample()
+            if (!success) return;
+        }
         if (stage === 3) {
             const success = await sendAudioToFlask();
             if (!success) return;
@@ -225,6 +299,8 @@ const SurveyPage = () => {
         if (stage < stages.length - 1) {
             setStage(stage + 1);
         }
+
+
     };
 
     const handleBack = () => {
@@ -236,7 +312,7 @@ const SurveyPage = () => {
     };
 
     const resetSurvey = useCallback(() => {
-        setStage(0);
+        setStage(3);
         setFormData({});
         setAudioData(prev => {
             Object.entries(prev).forEach(([key, { url }]) => {
@@ -253,6 +329,7 @@ const SurveyPage = () => {
             streamRef.current = null;
             console.log("Cleaned up media stream on reset");
         }
+        getSample()
     }, []);
 
     const renderCurrentStage = () => {
@@ -280,10 +357,17 @@ const SurveyPage = () => {
                         stopRecording={stopRecording}
                         audioUrl={audioData["speakingTest"]?.url}
                         downloadAudio={downloadAudio}
+                        text={text}
+                        audio={audio}
                     />
                 );
             case 4:
-                return <CompletionScreen resetSurvey={resetSurvey} />;
+                return <CompletionScreen
+                    resetSurvey={resetSurvey}
+                    formData={formData}
+                    audioData={audioData}
+                    accuracyResult={analysisResults}
+                />
             default:
                 return null;
         }

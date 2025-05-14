@@ -15,7 +15,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { HiLightBulb } from 'react-icons/hi';
 import { BsThreeDotsVertical } from 'react-icons/bs';
-
+import Live2DComponent from '../components/live2dModel'
 // Motion wrapper for Chakra components
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
@@ -243,9 +243,9 @@ const HomePage = () => {
                                 </Text>
                                 <HStack spacing={4} flexWrap="wrap">
                                     <MotionButton
-                                        as={Link}
-                                        href="#signup"
-                                        bgGradient="linear(to-r, #007AFF, #0A84FF)"
+                                        as={RouterLink}
+                                        to="/exercise"
+                                        bgGradient="linear(to-r, #007AFF, #ca0aff)"
                                         color="white"
                                         px={8}
                                         py={6}
@@ -258,13 +258,14 @@ const HomePage = () => {
                                             rotateX: 5,
                                             rotateY: 5,
                                             z: 10,
-                                            transition: { type: 'spring', stiffness: 300, damping: 15 },
                                         }}
                                         whileTap={{ scale: 0.95 }}
                                         transition={{ type: 'spring', stiffness: 200, damping: 10 }}
                                         style={{ perspective: '1000px' }}
+                                        _hover={' #ca0aff'}
+
                                     >
-                                        Start Free Trial
+                                        Start excersice
                                     </MotionButton>
                                     <MotionButton
                                         as={RouterLink}
@@ -295,7 +296,7 @@ const HomePage = () => {
                                 style={{ perspective: '1000px' }}
                             >
                                 <Image
-                                    src="images/developer.svg"
+                                    src="./images/developer.svg"
                                     alt="English Learning"
                                     rounded="3xl"
                                     objectFit="cover"
@@ -304,6 +305,7 @@ const HomePage = () => {
                                     style={{ transformStyle: 'preserve-3d' }}
                                 />
                             </MotionBox>
+                            {/* <Live2DComponent /> */}
                         </FadeInSection>
                     </Grid>
                 </Box>
@@ -396,16 +398,17 @@ const HomePage = () => {
                                 display="flex"
                                 alignItems="center"
                                 mx="auto"
+
                             >
                                 Discover All Features <Icon as={FaArrowRight} ml={2} />
                             </Button>
                         </Box>
                     </FadeInSection>
                 </Box>
-            </Box>
+            </Box >
 
             {/* Testimonials Section */}
-            <Box as="section" id="testimonials" py={20} px={{ base: 4, md: 6 }}>
+            <Box Box as="section" id="testimonials" py={20} px={{ base: 4, md: 6 }}>
                 <Box maxW="7xl" mx="auto">
                     <FadeInSection animation="fade-in scale-up">
                         <VStack textAlign="center" mb={16} spacing={4}>
@@ -484,10 +487,10 @@ const HomePage = () => {
                         ))}
                     </Grid>
                 </Box>
-            </Box>
+            </Box >
 
             {/* FAQ Section (unchanged for brevity, but can add 3D effects if desired) */}
-            <Box as="section" id="faq" py={20} px={{ base: 4, md: 6 }}>
+            <Box Box as="section" id="faq" py={20} px={{ base: 4, md: 6 }}>
                 <Box maxW="4xl" mx="auto">
                     <FadeInSection animation="fade-in">
                         <Heading
@@ -571,9 +574,9 @@ const HomePage = () => {
                         </Box>
                     </FadeInSection>
                 </Box>
-            </Box>
+            </Box >
             <Footer />
-        </Box>
+        </Box >
     );
 };
 

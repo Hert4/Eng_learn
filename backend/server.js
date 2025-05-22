@@ -25,6 +25,8 @@ app.use(cors({
 }));
 
 connectDB()
+
+
 const PORT = process.env.PORT || 5000
 
 // middleware simple just a function run between request and response

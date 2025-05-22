@@ -18,8 +18,8 @@ const styles = {
 };
 
 const config = {
-  initialColorMode: 'dark',
-  useSystemColorMode: true,
+  initialColorMode: 'light',
+  useSystemColorMode: false,
 };
 
 const colors = {
@@ -38,9 +38,9 @@ createRoot(document.getElementById('root')).render(
     <RecoilRoot >
       <BrowserRouter>
         <ChakraProvider theme={theme}>
-
           <ColorModeScript initialColorMode={theme.config.initialColorMode} />
           <App />
+
         </ChakraProvider>
       </BrowserRouter>
     </RecoilRoot>

@@ -23,6 +23,7 @@ import useShowToast from "../hooks/showToast";
 import userAtom from "../atom/userAtom";
 import { useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
+import MobileNav from '../components/mobileNav';
 
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
@@ -230,6 +231,7 @@ const UserProfile = () => {
             py={{ base: 16, md: 24 }}
             px={{ base: 2, md: 4 }}
         >
+            <MobileNav />
             <VStack spacing={6} align="stretch" w={'full'}>
                 {/* User Profile Section */}
                 <MotionBox

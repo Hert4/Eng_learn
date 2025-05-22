@@ -17,8 +17,16 @@ import { HiLightBulb } from 'react-icons/hi';
 import { BsThreeDotsVertical } from 'react-icons/bs';
 import Live2DComponent from '../components/live2dModel'
 // Motion wrapper for Chakra components
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useRef } from 'react';
+
+// Register ScrollTrigger
+gsap.registerPlugin(ScrollTrigger);
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
+
+
 
 // Fade-in animation component added 3d styl
 const FadeInSection = ({ children, animation = 'fade-in', delay = 0 }) => {
@@ -100,6 +108,8 @@ const FadeInSection = ({ children, animation = 'fade-in', delay = 0 }) => {
 };
 
 const HomePage = () => {
+
+
     const { colorMode } = useColorMode();
     const iosColors = {
         light: {

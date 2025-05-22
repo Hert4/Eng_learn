@@ -9,7 +9,7 @@ export default defineConfig({
   //set up these
   server: {
     port: 3000,
-    host: true,
+    host: '0.0.0.0',
     // https: true,
     //get rid of cors error
     proxy: {
@@ -18,6 +18,9 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // https://107.114.184.16:3000
+
+
     },
   }
 })

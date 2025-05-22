@@ -19,7 +19,8 @@ import { IoMdSend } from "react-icons/io";
 import { BsRobot } from "react-icons/bs";
 import { HiOutlineChevronDown } from "react-icons/hi";
 import FloatingLogo from "./FloatingLogo";
-
+import ReactMarkdown from 'react-markdown'
+import Markdown from "react-markdown";
 // Animation variants cho phong cách iPhone
 const modalVariants = {
     hidden: { opacity: 0, scale: 0.8, y: 100 },
@@ -83,9 +84,14 @@ const AIModal = () => {
             const formattedHistory = formatChatHistory();
             const fullPrompt = `${formattedHistory}\nUser: ${message}`;
 
-            const res = await fetch("http://107.124.124.71:11434/api/generate", {
+
+            const res = await fetch("https://107.114.184.16:3000/generate", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                referrerPolicy: "unsafe-url",
+                headers: {
+                    "Content-Type": "application/json",
+                    // 'Access-Control-Allow-Origin': '*'
+                },
                 body: JSON.stringify({
                     model: "qwen2.5-coder:7b",
                     system: SYSTEM_PROMPT,
@@ -255,7 +261,7 @@ const AIModal = () => {
                                                         transform: "rotate(-20deg)",
                                                     }}
                                                 >
-                                                    {userMsg}
+                                                    <ReactMarkdown>{userMsg}</ReactMarkdown>
                                                 </Box>
                                             </Flex>
 
@@ -267,7 +273,6 @@ const AIModal = () => {
                                                         p={3}
                                                         borderRadius="6px 20px 20px 20px"
                                                         color={textColorAI}
-                                                        maxW="85%"
                                                         boxShadow="0px 4px 12px rgba(0, 0, 0, 0.05)"
                                                         position="relative"
                                                         _before={{
@@ -282,7 +287,7 @@ const AIModal = () => {
                                                             transform: "rotate(20deg)",
                                                         }}
                                                     >
-                                                        {aiMsg}
+                                                        <ReactMarkdown>{aiMsg}</ReactMarkdown>
                                                     </Box>
                                                 </Flex>
                                             )}

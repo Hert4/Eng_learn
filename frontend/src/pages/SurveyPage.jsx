@@ -123,22 +123,24 @@ const SurveyPage = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    category: cate || 0,
+                    category: cate,
                     language: "en",
                 }),
             });
             const data = await res.json();
             if (data.error) {
-                showToast("Upload Failed", data.error, "error");
+                const errorMessage = typeof data.error === 'string'
+                    ? data.error
+                    : data.error.message || 'An unknown error occurred';
+                showToast("Error", errorMessage, "error");
                 return false;
             }
             console.log(data);
-            // Assuming data has the transcripts directly
-            setText(data); // Or setText(data.result) if nested
+            setText(data);
             return true;
         } catch (error) {
             console.log(error);
-            showToast("Upload Failed", error, "error");
+            showToast("Error", error, "error");
             return false;
         }
     }

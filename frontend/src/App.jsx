@@ -34,9 +34,9 @@ function App() {
           <Route path="/" element={user ? <HomePage /> : <Navigate to="/auth" />} />
           <Route path="/auth" element={!user ? <AuthPage /> : <Navigate to="/" />} />
           <Route path="/:username" element={<UserPage />} />
-          <Route path="/exercise" element={<SurveyPage />} />
-          <Route path="/test" element={<TestPage />} />
-          <Route path="/faq" element={<FaqPage />} />
+          <Route path="/exercise" element={user ? <SurveyPage /> : <Navigate to='/auth' />} />
+          <Route path="/test" element={user ? <TestPage /> : <Navigate to='/auth' />} />
+          <Route path="/faq" element={user ? <FaqPage /> : <Navigate to='/auth' />} />
         </Routes>
       </Box>
 

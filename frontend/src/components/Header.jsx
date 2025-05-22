@@ -163,6 +163,11 @@ const Header = ({ user }) => {
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.97 }}
                         color={'linear(to-r, #007AFF, #ca0aff)'}
+                        onClick={
+                            () => {
+                                setActiveSection('Home');
+                            }
+                        }
                     >
                         <Box as="span" bgGradient="linear(to-r, #007AFF,rgb(255, 10, 10))" bgClip="text">
                             iLearning/SEVT
@@ -309,7 +314,7 @@ const Header = ({ user }) => {
                         )}
 
                         {/* About us btn */}
-                        <MotionButton
+                        {/* <MotionButton
                             onClick={handleOpenLinks}
                             size="sm"
                             px={4}
@@ -329,7 +334,7 @@ const Header = ({ user }) => {
                             }}
                         >
                             About
-                        </MotionButton>
+                        </MotionButton> */}
                     </Flex>
 
                     {/* Mobile menu */}
@@ -549,7 +554,7 @@ const Header = ({ user }) => {
             </MotionBox>
 
             {/* Popup hiển thị khi bấm About us */}
-            <LinksPopup isOpen={isLinksOpen} onClose={closeLinks} />
+            {/* <LinksPopup isOpen={isLinksOpen} onClose={closeLinks} /> */}
         </>
     );
 };

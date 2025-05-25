@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import * as PIXI from 'pixi.js'
-import { Live2DModel } from 'pixi-live2d-display/cubism4'
+import { Live2DModel } from "pixi-live2d-display";
 import { MotionSync } from "live2d-motionsync";
 
 window.PIXI = PIXI
@@ -38,45 +38,20 @@ function Live2DComponent() {
             const isMobile = window.innerWidth <= 768; // Adjust breakpoint as needed
             const baseScale = isMobile ? 0.4 : 0.3; // Larger scale for mobile
             model.scale.set(baseScale, baseScale);
-
             const motionSync = new MotionSync(model.internalModel);
+
             motionSync.loadMotionSyncFromUrl("Firefly/Firefly.motionsync3.json");
 
-            let currentMotion = null;
-            model.on("pointertap", async () => {
-                if (currentMotion) {
-                    motionSync.reset();
-                    await model.motion('Motion_1');
-                    currentMotion = null;
-                    console.log("Stopped");
-                } else {
-                    model.motion("Talk");
-                    currentMotion = motionSync.play();
-                    await currentMotion.then(() => {
-                        currentMotion = null;
-                        console.log("Finished playing");
-                    });
-
-                    console.log("Playing");
-                }
+            motionSync.play("../public/talk.wav").then(() => {
+                console.log("play end");
             });
 
-            // Add resize listener for responsiveness
-            // const onResize = () => {
-            //     model.position.set(window.innerWidth / 2, window.innerHeight / 2);
-            //     const isMobile = window.innerWidth <= 768; // Adjust breakpoint as needed
-            //     const scaleFactor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-            //     const adjustedScale = isMobile ? 0.4 * scaleFactor : 0.25 * scaleFactor; // Larger scale for mobile
-            //     model.scale.set(adjustedScale, adjustedScale);
+
+            // // Cleanup on component unmount
+            // return () => {
+            //     // window.removeEventListener("resize", onResize);
+            //     app.destroy(true, { children: true });
             // };
-
-            // window.addEventListener("resize", onResize);
-
-            // Cleanup on component unmount
-            return () => {
-                // window.removeEventListener("resize", onResize);
-                app.destroy(true, { children: true });
-            };
         });
     }, []);
 

@@ -186,32 +186,32 @@ const SurveyPage = () => {
     }, [audioData, blobToBase64, showToast]);
 
     const [audio, setAudio] = useState()
-    const getAudioFromText = async () => {
-        try {
-            const res = await fetch('https://107.114.184.16:3000/getAudioFromText', {
-                method: "POST",
-                headers: "application/json",
-                body: {
-                    value: text?.real_transcript[0] || "Hello"
-                }
-            })
+    // const getAudioFromText = async () => {
+    //     try {
+    //         const res = await fetch('https://107.114.184.16:3000/getAudioFromText', {
+    //             method: "POST",
+    //             headers: "application/json",
+    //             body: {
+    //                 value: text?.real_transcript[0] || "Hello"
+    //             }
+    //         })
 
-            const data = res.json()
-            if (data.error) {
-                showToast('Error', data.error, 'error')
-                return false
-            }
-            console.log("Get Audio data: ", data)
+    //         const data = res.json()
+    //         if (data.error) {
+    //             showToast('Error', data.error, 'error')
+    //             return false
+    //         }
+    //         console.log("Get Audio data: ", data)
 
-            setAudio(data)
-            return true
-        } catch (error) {
-            console.log(error)
-            showToast('Error', error, 'error')
-            return false
-        }
+    //         setAudio(data)
+    //         return true
+    //     } catch (error) {
+    //         console.log(error)
+    //         showToast('Error', error, 'error')
+    //         return false
+    //     }
 
-    }
+    // }
     const startRecording = useCallback(async (stageIndex) => {
         try {
             audioChunksRef.current = [];

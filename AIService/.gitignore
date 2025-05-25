@@ -1,0 +1,8 @@
+# Ignore environment and models
+env/
+models/
+
+# Other heavy folders
+Qwen2.5-0.5B-Instruct/
+Spark-TTS/
+Spark-TTS-0.5B-with-KafkaSpark/

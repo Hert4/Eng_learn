@@ -12,6 +12,7 @@ import {
     Input,
 } from '@chakra-ui/react';
 import { FaMicrophone, FaStop } from 'react-icons/fa';
+import AudioVisualize from './audioVisualize';
 
 const VoiceAssistant = () => {
     const [isRecording, setIsRecording] = useState(false);
@@ -25,7 +26,7 @@ const VoiceAssistant = () => {
     const recognitionRef = useRef(null);
     const toast = useToast();
 
-    const wsUrl = '/ws/assistant';
+    const wsUrl = 'https://74fe-34-67-222-190.ngrok-free.app/ws/assistant';
 
     useEffect(() => {
         checkMicPermission();
@@ -278,6 +279,7 @@ const VoiceAssistant = () => {
 
     return (
         <Container maxW="container.md" py={8}>
+            <AudioVisualize />
             <VStack spacing={4} align="stretch">
                 <Text fontSize="2xl" fontWeight="bold">Voice Assistant</Text>
                 <Flex justify="space-between" align="center">

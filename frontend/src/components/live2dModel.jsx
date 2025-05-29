@@ -42,9 +42,9 @@ function Live2DComponent() {
 
             motionSync.loadMotionSyncFromUrl("Firefly/Firefly.motionsync3.json");
 
-            motionSync.play("../public/talk.wav").then(() => {
-                console.log("play end");
-            });
+            // motionSync.play("../public/talk.wav").then(() => {
+            //     console.log("play end");
+            // });
 
 
             // // Cleanup on component unmount

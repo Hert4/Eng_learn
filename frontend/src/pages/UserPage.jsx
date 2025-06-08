@@ -11,12 +11,14 @@ import {
     ModalHeader, ModalCloseButton,
     ModalBody, ModalFooter, Table,
     Thead, Tbody, Tr, Th, Td, Badge,
-    Spinner
+    Spinner,
+    Image,
+    Flex
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom"
 import useGetUserProfile from "../hooks/useGetUserProfile";
 import { WarningTwoIcon, EditIcon } from "@chakra-ui/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Calendar, Lock, Award } from 'lucide-react';
 import useShowToast from "../hooks/showToast";
@@ -24,6 +26,11 @@ import userAtom from "../atom/userAtom";
 import { useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import MobileNav from '../components/mobileNav';
+import CloudEffect from '../components/cloudEffect';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { FaLeaf } from "react-icons/fa";
+import CalendarComp from "../components/Calender"
+import Live2DComponent from "../components/live2dModel";
 
 const MotionBox = motion(Box);
 const MotionButton = motion(Button);
@@ -36,6 +43,7 @@ const UserProfile = () => {
     const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
     const { isOpen: isPasswordOpen, onOpen: onPasswordOpen, onClose: onPasswordClose } = useDisclosure();
     const navigate = useNavigate(); // Khởi tạo useNavigate
+    const [users, setUsers] = useState([])
 
     // Form states
     const [formData, setFormData] = useState({
@@ -57,7 +65,68 @@ const UserProfile = () => {
     const fontSize = useBreakpointValue({ base: "sm", md: "md" });
     const tableVariant = useBreakpointValue({ base: "simple", md: "striped" });
 
-    // Exam history data (replace with your actual data)
+
+    //set up for motion 
+    const [backgroundColor, setBackgroundColor] = useState(null)
+    const [color1, setColor1] = useState(null)
+    // const [color2, setColor2] = useState(null)
+    const [quantity, setQuantity] = useState(null)
+
+
+    useEffect(() => {
+        setQuantity(3)
+        try {
+
+            if (colorMode === 'light') {
+                setBackgroundColor(0xfcfcfc)
+                // setQuantity(5)
+                setColor1(0xff0000)
+            } else {
+                setBackgroundColor(0x131313)
+                // setQuantity(1)
+                setColor1(0x89ff)
+
+            }
+
+        } catch (error) {
+            console.log(error)
+            showToast(
+                "Error",
+                error,
+                'error'
+            )
+        }
+
+    }, [colorMode])
+
+    const getUsers = async () => {
+        try {
+            const res = await fetch('/api/users/', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(users)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Something went wrong");
+            }
+            console.log(data)
+            setUsers(data);
+            // showToast("Success", "Users fetched successfully", "success");
+
+        } catch (error) {
+            console.error(error);
+            // showToast("Error", error.message, "error");
+        }
+    };
+    useEffect(() => {
+        getUsers()
+    }, [])
+
     const examHistory = [
         {
             id: 1,
@@ -80,7 +149,6 @@ const UserProfile = () => {
         // Thêm dữ liệu khác nếu cần
     ];
 
-    // iOS color palette
     const iosColors = {
         light: {
             primary: '#007AFF',
@@ -215,11 +283,9 @@ const UserProfile = () => {
                 return
             }
             setIsUpdating(false);
-            showToast('Success', 'Update password successfully!', 'success')
             onPasswordClose();
         } catch (error) {
             setIsUpdating(false);
-            showToast('Error', error, 'error')
         } finally {
             setIsUpdating(false)
         }
@@ -228,11 +294,15 @@ const UserProfile = () => {
     return (
         <Container
             maxW="container.lg"
+            height={'auto'}
             py={{ base: 16, md: 24 }}
             px={{ base: 2, md: 4 }}
         >
+
+
             <MobileNav />
             <VStack spacing={6} align="stretch" w={'full'}>
+
                 {/* User Profile Section */}
                 <MotionBox
                     p={padding}
@@ -243,12 +313,29 @@ const UserProfile = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
+                    position="relative"
+                    overflow="hidden"
+
                 >
+
+                    <CloudEffect
+                        quantity={quantity}
+                        color1={color1}
+                        backgroundColor={backgroundColor}
+
+                    />
+
+
+
                     <Stack
                         direction={{ base: "column", md: "row" }}
                         spacing={6}
                         align={'center'}
                     >
+
+
+
+
                         <Avatar
                             size={avatarSize}
                             name={user.name}
@@ -263,7 +350,10 @@ const UserProfile = () => {
                             textAlign={{ base: "center", md: "left" }}
                             flex={1}
                         >
+
                             <HStack>
+
+
                                 <Text
                                     fontSize="xl"
                                     fontWeight="600"
@@ -360,11 +450,74 @@ const UserProfile = () => {
 
                                 </HStack>
                             )}
-
                         </VStack>
+
+
                     </Stack>
                 </MotionBox>
+                <MotionBox
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    borderWidth="1px"
+                    borderRadius="2xl"
+                    bg={colorMode === 'light' ? 'rgba(249, 249, 249, 0.8)' : 'rgba(36, 36, 38, 0.8)'}
+                    backdropFilter="blur(20px)"
+                    p={{ base: 4, md: 6 }}
+                >
+                    <Stack
+                        direction={{ base: "column", md: "row" }}
+                        overflow="auto"
+                    >
+                        <Box
+                            flex="1" // Let it grow equally
+                            borderWidth="1px"
+                            borderRadius="xl"
+                            bg={colorMode === 'light' ? 'rgba(249, 249, 249, 0.8)' : 'rgba(36, 36, 38, 0.8)'}
+                            backdropFilter="blur(20px)"
+                            p={4}
+                            overflow="auto"
+                        >
+                            <Table variant="simple" size={{ base: "sm", md: "md" }}  >
+                                <Thead>
+                                    <Tr>
+                                        <Th>Rank</Th>
+                                        <Th>Username</Th>
+                                        <Th>Email</Th>
+                                    </Tr>
+                                </Thead>
+                                <Tbody>
+                                    {Array.isArray(users) && users.length > 0 ? (
+                                        users.map((user, index) => (
+                                            <Tr key={user._id}>
+                                                <Td>{index + 1}</Td>
+                                                <Td>{user.username}</Td>
+                                                <Td>{user.email}</Td>
+                                            </Tr>
+                                        ))
+                                    ) : (
+                                        <Tr>
+                                            <Td colSpan={3}>
+                                                <Center>No users found</Center>
+                                            </Td>
+                                        </Tr>
+                                    )}
+                                </Tbody>
+                            </Table>
 
+                        </Box>
+
+                        <Box
+                            flex={{ base: "1", md: "0 0 300px" }}
+                            borderWidth="1px"
+                            borderRadius="xl"
+                            bg={colorMode === 'light' ? 'rgba(249, 249, 249, 0.8)' : 'rgba(36, 36, 38, 0.8)'}
+
+                        >
+                            <CalendarComp />
+                        </Box>
+                    </Stack>
+                </MotionBox>
                 {/* Exam History Section */}
                 <MotionBox
                     initial={{ opacity: 0, y: 20 }}

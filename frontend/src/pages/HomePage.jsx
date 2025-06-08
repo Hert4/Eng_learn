@@ -20,6 +20,8 @@ import Live2DComponent from '../components/live2dModel'
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useRef } from 'react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
 
 // Register ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
@@ -215,7 +217,6 @@ const HomePage = () => {
                     </Link>
                 ))}
             </Box>
-
             {/* Hero Section */}
             <MotionBox
                 as="section"
@@ -305,7 +306,7 @@ const HomePage = () => {
                                 whileHover={shouldReduceMotion ? {} : "hover"}
                                 style={{ perspective: '1000px' }}
                             >
-                                <Image
+                                {/* <Image
                                     src="./images/developer.svg"
                                     alt="English Learning"
                                     rounded="3xl"
@@ -313,7 +314,16 @@ const HomePage = () => {
                                     maxH={{ base: '300px', md: '500px' }}
                                     w="full"
                                     style={{ transformStyle: 'preserve-3d' }}
-                                />
+                                /> */}
+
+                                <DotLottieReact
+                                    src="./Animation - 1748838659052.lottie"
+                                    loop
+                                    autoplay
+                                    width={'fit-content'}
+                                    height={'fit-content'}
+                                />  
+
                             </MotionBox>
                             {/* <Live2DComponent /> */}
                         </FadeInSection>

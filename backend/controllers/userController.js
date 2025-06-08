@@ -99,6 +99,7 @@ const logoutUser = async (req, res) => {
         res.status(500).json({ error: error.message });
         console.log("Error in logoutUser: ", error.message);
     }
+
 };
 
 const getUserProfile = async(req, res) => {
@@ -170,10 +171,36 @@ const updateUser = async(req, res) => {
     
 }
 
+const getAllUser = async (req, res) => {
+    try {
+      const users = await User.find({}).limit(5) // for sorting added sort({'attr'})
+      
+      if(!users){
+        res.status(404).json({
+          error: "Not found any users"
+        })
+        return
+    
+      }
+
+      console.log(users)
+      return res.status(200).json(
+        users
+      )
+      
+    } catch (error) {
+      console.log("Error,", error)
+      res.status(500).json({
+        error: "Server Error\n" + error.message
+      })
+    }
+}
+
 export {
     signupUser,
     loginUser,
     logoutUser,
     getUserProfile,
-    updateUser
+    updateUser,
+    getAllUser
 };

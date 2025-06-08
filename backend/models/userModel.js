@@ -27,7 +27,8 @@ const userSchema = mongoose.Schema({
     exams: {
         type: Object,
         default: {}
-    }
+    },
+
 }, {timestamps: true})
 
 const User = mongoose.model('User', userSchema)

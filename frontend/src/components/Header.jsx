@@ -170,7 +170,7 @@ const Header = ({ user }) => {
                         }
                     >
                         <Box as="span" bgGradient="linear(to-r, #007AFF,rgb(255, 10, 10))" bgClip="text">
-                            iLearning/SEVT
+                            ENGVIBE
                         </Box>
                     </MotionLink>
 

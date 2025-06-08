@@ -14,11 +14,14 @@ import FloatingLogo from './components/FloatingLogo';
 import HomePage from './pages/HomePage';
 import AIModal from './components/AIModel';
 
+
+
+
 function App() {
   const user = useRecoilValue(userAtom);
   const location = useLocation();
   const [showHeader, setShowHeader] = useState(false);
-  const [loading, setLoading] = useState(true); // NEW: loading state
+  const [loading, setLoading] = useState(true);
 
   const noHeaderRoutes = useMemo(() => ['/auth'], []);
 
@@ -27,7 +30,7 @@ function App() {
   }, [location.pathname, user, noHeaderRoutes]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000); // Show loading GIF for 2 seconds
+    const timer = setTimeout(() => setLoading(false), 4800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -43,15 +46,15 @@ function App() {
 
 
       >
-        <Image src="/loading.gif" alt="Loading..." boxSize="100px" borderRadius="full" />
+        <Image src="/loading.gif" alt="Loading..." boxSize="200px" borderRadius="full" />
       </Box>
     );
   }
 
   return (
-    <Box w="full">
+    <Box w="full" >
       {showHeader && <Header user={user} />}
-      <Box>
+      <Box >
         <Routes>
           <Route path="/" element={user ? <HomePage /> : <Navigate to="/auth" />} />
           <Route path="/auth" element={!user ? <AuthPage /> : <Navigate to="/" />} />

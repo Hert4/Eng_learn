@@ -29,6 +29,7 @@
     "dayjs": "^1.11.13",
     "framer-motion": "^12.7.4",
     "gsap": "^3.13.0",
+    "kokoro-js": "^1.2.1",
     "live2d-motionsync": "^0.0.4",
     "lucide-react": "^0.503.0",
     "onnxruntime-web": "^1.22.0",

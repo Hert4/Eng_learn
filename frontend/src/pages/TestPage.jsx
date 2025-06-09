@@ -58,7 +58,7 @@ const TestPage = () => {
     useEffect(() => {
         const connectWebSocket = () => {
             // Replace with your ngrok URL
-            const wsUrl = 'wss://d2c4-34-55-196-65.ngrok-free.app/ws';
+            const wsUrl = 'wss://fb91-34-122-76-151.ngrok-free.app/ws';
 
             socketRef.current = new WebSocket(wsUrl);
 

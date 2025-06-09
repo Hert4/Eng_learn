@@ -21,7 +21,7 @@ function App() {
   const user = useRecoilValue(userAtom);
   const location = useLocation();
   const [showHeader, setShowHeader] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   const noHeaderRoutes = useMemo(() => ['/auth'], []);
 
@@ -29,27 +29,27 @@ function App() {
     setShowHeader(user && !noHeaderRoutes.includes(location.pathname));
   }, [location.pathname, user, noHeaderRoutes]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 4800);
-    return () => clearTimeout(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => setLoading(false), 4800);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
-  if (loading) {
-    return (
-      <Box
-        w="100vw"
-        h="100vh"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        bg="pink.100"
+  // if (loading) {
+  //   return (
+  //     <Box
+  //       w="100vw"
+  //       h="100vh"
+  //       display="flex"
+  //       alignItems="center"
+  //       justifyContent="center"
+  //       bg="pink.100"
 
 
-      >
-        <Image src="/loading.gif" alt="Loading..." boxSize="200px" borderRadius="full" />
-      </Box>
-    );
-  }
+  //     >
+  //       <Image src="/loading.gif" alt="Loading..." boxSize="200px" borderRadius="full" />
+  //     </Box>
+  //   );
+  // }
 
   return (
     <Box w="full" >

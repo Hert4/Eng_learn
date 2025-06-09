@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@ricky0123/vad-react": "^0.0.30",
+    "react-feather": "^2.0.10",
+    "react-use-audio-player": "^4.0.2",
+    "voice-activity-detection": "^0.0.5",
+    "webrtcvad": "^1.0.1"
+  }
+}

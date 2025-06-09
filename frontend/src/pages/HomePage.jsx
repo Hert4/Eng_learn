@@ -15,11 +15,11 @@ import { Link as RouterLink } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { HiLightBulb } from 'react-icons/hi';
 import { BsThreeDotsVertical } from 'react-icons/bs';
-import Live2DComponent from '../components/live2dModel'
+// import Live2DComponent from '../components/live2dModel'
 // Motion wrapper for Chakra components
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useRef } from 'react';
+// import { useRef } from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 
@@ -322,7 +322,7 @@ const HomePage = () => {
                                     autoplay
                                     width={'fit-content'}
                                     height={'fit-content'}
-                                />  
+                                />
 
                             </MotionBox>
                             {/* <Live2DComponent /> */}

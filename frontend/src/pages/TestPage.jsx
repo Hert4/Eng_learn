@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useMicVAD } from '@ricky0123/vad-react';
 import {
     Box,
     Button,
@@ -10,13 +11,12 @@ import {
     VStack,
     HStack,
     IconButton,
-    Spinner,
     Progress,
     Alert,
     AlertIcon,
     useColorModeValue
 } from '@chakra-ui/react';
-import { keyframes } from '@chakra-ui/system';  // Correct import for keyframes
+import { keyframes } from '@chakra-ui/system';
 import { FaMicrophone, FaStop, FaPlay, FaUpload, FaKeyboard } from 'react-icons/fa';
 import { MdSend } from 'react-icons/md';
 
@@ -33,21 +33,18 @@ const waveAnimation = keyframes`
   100% { height: 10px; }
 `;
 
-
 const TestPage = () => {
-    const [isRecording, setIsRecording] = useState(false);
-    const [audioBlob, setAudioBlob] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [transcription, setTranscription] = useState('');
     const [response, setResponse] = useState('');
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [progress, setProgress] = useState(0);
     const [socketStatus, setSocketStatus] = useState('disconnected');
     const [inputText, setInputText] = useState('');
     const [showTextInput, setShowTextInput] = useState(false);
-    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);
 
     const audioRef = useRef(null);
-    const mediaRecorderRef = useRef(null);
     const socketRef = useRef(null);
     const toast = useToast();
     const animation = `${pulse} 2s infinite`;
@@ -57,15 +54,13 @@ const TestPage = () => {
     // Initialize WebSocket connection
     useEffect(() => {
         const connectWebSocket = () => {
-            // Replace with your ngrok URL
-            const wsUrl = 'wss://fb91-34-122-76-151.ngrok-free.app/ws';
-
+            const wsUrl = 'wss://f83c-34-45-118-241.ngrok-free.app/ws';
             socketRef.current = new WebSocket(wsUrl);
 
             socketRef.current.onopen = () => {
                 setSocketStatus('connected');
                 toast({
-                    title: 'Connected to server',
+                    title: 'Đã kết nối với server',
                     status: 'success',
                     duration: 3000,
                     isClosable: true,
@@ -76,21 +71,19 @@ const TestPage = () => {
             socketRef.current.onclose = () => {
                 setSocketStatus('disconnected');
                 toast({
-                    title: 'Disconnected from server',
+                    title: 'Mất kết nối với server',
                     status: 'error',
                     duration: 3000,
                     isClosable: true,
                     position: 'top-right'
                 });
-
-                // Attempt to reconnect after 5 seconds
                 setTimeout(connectWebSocket, 5000);
             };
 
             socketRef.current.onerror = (error) => {
-                console.error('WebSocket error:', error);
+                console.error('Lỗi WebSocket:', error);
                 toast({
-                    title: 'WebSocket error',
+                    title: 'Lỗi WebSocket',
                     description: error.message,
                     status: 'error',
                     duration: 5000,
@@ -116,8 +109,6 @@ const TestPage = () => {
                             setAudioBlob(data.audioUrl);
                             setProgress(100);
                             setIsProcessing(false);
-
-                            // Play the audio automatically
                             setTimeout(() => {
                                 if (audioRef.current) {
                                     audioRef.current.play();
@@ -130,7 +121,7 @@ const TestPage = () => {
                         break;
                     case 'error':
                         toast({
-                            title: 'Processing error',
+                            title: 'Lỗi xử lý',
                             description: data.message,
                             status: 'error',
                             duration: 5000,
@@ -140,7 +131,7 @@ const TestPage = () => {
                         setIsProcessing(false);
                         break;
                     default:
-                        console.log('Unknown message type:', data.type);
+                        console.log('Loại tin nhắn không xác định:', data.type);
                 }
             };
         };
@@ -174,58 +165,86 @@ const TestPage = () => {
         };
     }, [audioBlob]);
 
-    // Start recording audio
-    const startRecording = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorderRef.current = new MediaRecorder(stream);
-            const audioChunks = [];
-
-            mediaRecorderRef.current.ondataavailable = (event) => {
-                audioChunks.push(event.data);
-            };
-
-            mediaRecorderRef.current.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                setAudioBlob(URL.createObjectURL(audioBlob));
-                handleSendAudio(audioBlob);
-            };
-
-            mediaRecorderRef.current.start();
-            setIsRecording(true);
+    // Use VAD for automatic speech detection
+    const vad = useMicVAD({
+        startOnLoad: false,
+        onSpeechEnd: (audio) => {
+            const wavBuffer = floatToWav(audio);
+            setIsProcessing(true);
+            setProgress(0);
+            setTranscription('');
+            setResponse('');
+            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                socketRef.current.send(wavBuffer);
+            } else {
+                toast({
+                    title: 'Không kết nối với server',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                    position: 'top-right'
+                });
+                setIsProcessing(false);
+            }
+        },
+        onSpeechStart: () => {
             toast({
-                title: 'Recording started',
+                title: 'Bắt đầu nói',
                 status: 'info',
                 duration: 2000,
                 isClosable: true,
                 position: 'top-right'
             });
-        } catch (error) {
-            console.error('Error starting recording:', error);
-            toast({
-                title: 'Recording error',
-                description: error.message,
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-                position: 'top-right'
-            });
+        },
+    });
+
+    // Control VAD based on processing and speaking states
+    useEffect(() => {
+        if (vad.loading) return;
+        if (isProcessing || isSpeaking) {
+            vad.pause();
+        } else {
+            vad.start();
         }
+    }, [vad.loading, isProcessing, isSpeaking, vad]);
+
+    // Helper function to convert Float32Array to WAV ArrayBuffer
+    const floatToWav = (floatArray, numChannels = 1, sampleRate = 16000) => {
+        const bytesPerSample = 2;
+        const blockAlign = numChannels * bytesPerSample;
+        const buffer = new ArrayBuffer(44 + floatArray.length * bytesPerSample);
+        const view = new DataView(buffer);
+
+        // WAV header
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + floatArray.length * bytesPerSample, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true); // PCM
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * blockAlign, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bytesPerSample * 8, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, floatArray.length * bytesPerSample, true);
+
+        // Convert Float32Array to Int16Array
+        const int16Array = new Int16Array(floatArray.length);
+        for (let i = 0; i < floatArray.length; i++) {
+            int16Array[i] = Math.max(-32768, Math.min(32767, floatArray[i] * 32767));
+        }
+
+        // Copy data to buffer
+        new Int16Array(buffer, 44, floatArray.length).set(int16Array);
+        return buffer;
     };
 
-    // Stop recording audio
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            setIsRecording(false);
-            toast({
-                title: 'Recording stopped',
-                status: 'info',
-                duration: 2000,
-                isClosable: true,
-                position: 'top-right'
-            });
+    // Helper function to write string to DataView
+    const writeString = (view, offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
         }
     };
 
@@ -236,8 +255,8 @@ const TestPage = () => {
 
         if (!file.type.match('audio.*')) {
             toast({
-                title: 'Invalid file type',
-                description: 'Please upload an audio file',
+                title: 'Loại tệp không hợp lệ',
+                description: 'Vui lòng tải lên tệp âm thanh',
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -247,22 +266,6 @@ const TestPage = () => {
         }
 
         setAudioBlob(URL.createObjectURL(file));
-        handleSendAudio(file);
-    };
-
-    // Send audio to server via WebSocket
-    const handleSendAudio = (audioBlob) => {
-        if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-            toast({
-                title: 'Not connected to server',
-                status: 'error',
-                duration: 3000,
-                isClosable: true,
-                position: 'top-right'
-            });
-            return;
-        }
-
         setIsProcessing(true);
         setProgress(0);
         setTranscription('');
@@ -273,7 +276,7 @@ const TestPage = () => {
             const arrayBuffer = reader.result;
             socketRef.current.send(arrayBuffer);
         };
-        reader.readAsArrayBuffer(audioBlob);
+        reader.readAsArrayBuffer(file);
     };
 
     // Send text input to server
@@ -282,7 +285,7 @@ const TestPage = () => {
 
         if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
             toast({
-                title: 'Not connected to server',
+                title: 'Không kết nối với server',
                 status: 'error',
                 duration: 3000,
                 isClosable: true,
@@ -331,7 +334,7 @@ const TestPage = () => {
             flexDirection="column"
             justifyContent="center"
         >
-            {/* Connection status - subtle indicator */}
+            {/* Connection status */}
             <Box position="absolute" top={4} right={4}>
                 <Box
                     w="12px"
@@ -355,21 +358,19 @@ const TestPage = () => {
                     justifyContent="center"
                     boxShadow="xl"
                     border={`4px solid ${ringColor}`}
-                    animation={isRecording || isSpeaking ? animation : undefined}
+                    animation={vad.listening || isSpeaking ? animation : undefined}
                     transition="all 0.3s ease"
                     _hover={{
                         transform: 'scale(1.02)',
                         boxShadow: '2xl'
                     }}
                 >
-                    {/* Center microphone or stop button */}
+                    {/* Center microphone or processing indicator */}
                     <IconButton
                         isRound
                         size="lg"
-                        icon={isRecording ? <FaStop /> : <FaMicrophone />}
-                        colorScheme={isRecording ? 'red' : 'blue'}
-                        onClick={isRecording ? stopRecording : startRecording}
-                        aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                        icon={vad.listening ? <FaMicrophone /> : <FaStop />}
+                        colorScheme={vad.listening ? 'blue' : 'red'}
                         isDisabled={isProcessing}
                         boxShadow="md"
                         position="absolute"
@@ -377,8 +378,8 @@ const TestPage = () => {
                         fontSize="24px"
                     />
 
-                    {/* Sound waves animation when recording or speaking */}
-                    {(isRecording || isSpeaking) && (
+                    {/* Sound waves animation when listening or speaking */}
+                    {(vad.listening || isSpeaking) && (
                         <Box position="absolute" bottom="20%">
                             <SoundWaves />
                         </Box>
@@ -408,7 +409,7 @@ const TestPage = () => {
                 <HStack spacing={4}>
                     <IconButton
                         icon={<FaKeyboard />}
-                        aria-label="Text input"
+                        aria-label="Nhập văn bản"
                         onClick={() => setShowTextInput(!showTextInput)}
                         colorScheme="gray"
                         isRound
@@ -422,7 +423,7 @@ const TestPage = () => {
                         variant="outline"
                         rounded="full"
                     >
-                        Upload
+                        Tải lên
                         <Input
                             type="file"
                             id="audio-upload"
@@ -433,7 +434,7 @@ const TestPage = () => {
                     </Button>
                 </HStack>
 
-                {/* Text input that slides in */}
+                {/* Text input */}
                 {showTextInput && (
                     <Box
                         w="full"
@@ -447,7 +448,7 @@ const TestPage = () => {
                             <Input
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
-                                placeholder="Type your message..."
+                                placeholder="Nhập tin nhắn của bạn..."
                                 isDisabled={isProcessing}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSendText()}
                                 autoFocus
@@ -457,7 +458,7 @@ const TestPage = () => {
                                 colorScheme="blue"
                                 onClick={handleSendText}
                                 isDisabled={!inputText.trim() || isProcessing}
-                                aria-label="Send text"
+                                aria-label="Gửi văn bản"
                             />
                         </HStack>
                     </Box>
@@ -474,7 +475,7 @@ const TestPage = () => {
                             boxShadow="sm"
                             alignSelf="flex-start"
                         >
-                            <Text fontWeight="bold" color="blue.800">You:</Text>
+                            <Text fontWeight="bold" color="blue.800">Bạn:</Text>
                             <Text>{transcription}</Text>
                         </Box>
                     )}
@@ -488,7 +489,7 @@ const TestPage = () => {
                             boxShadow="sm"
                             alignSelf="flex-end"
                         >
-                            <Text fontWeight="bold" color="gray.800">Assistant:</Text>
+                            <Text fontWeight="bold" color="gray.800">Trợ lý:</Text>
                             <Text>{response}</Text>
                         </Box>
                     )}
@@ -517,7 +518,7 @@ const TestPage = () => {
                             borderRadius="full"
                         />
                         <Text textAlign="center" mt={2} fontSize="sm" color="gray.500">
-                            Processing... {progress}%
+                            Đang xử lý... {progress}%
                         </Text>
                     </Box>
                 )}
